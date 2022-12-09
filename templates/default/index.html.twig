@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My App{% endblock %}
+
+{% block body %}
+    <div id="root"></div>
+
+    <script>
+        {#console.log({% if user is null %}null{% else %}{{ user|raw }}{% endif %})#}
+
+        window.user = {% if user is null %}null{% else %}{{ user|raw }}{% endif %}
+    </script>
+{% endblock %}
