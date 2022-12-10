@@ -81,6 +81,24 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getOneOrNullResult();
     }
 
+    public function incrementPostCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.postCount = u.postCount + 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
+    public function decrementPostCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.postCount = u.postCount - 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */

@@ -1,26 +1,19 @@
 import React, {useContext, useRef, useState} from "react"
 import AuthContext from "../../contexts/AuthContext"
 import axios from "axios"
+import useForm from "../../hooks/useForm"
 
 function AccountSettingsForm() {
-    const {currentUser} = useContext(AuthContext)
-    const [inputs, setInputs] = useState({
+    const {currentUser, updateUser} = useContext(AuthContext)
+    const {inputs, handleChange} = useForm({
         username: currentUser.username,
         email: currentUser.email,
         bio: currentUser.bio === null ? "" : currentUser.bio
     })
+
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
-
-    function handleChange(event) {
-        const {name, value} = event.target
-
-        setInputs(prevInputs => ({
-            ...prevInputs,
-            [name]: value
-        }))
-    }
 
     function handleSubmit(event) {
         event.preventDefault()
@@ -40,6 +33,12 @@ function AccountSettingsForm() {
             bio: inputs.bio
         }).then(() => {
             setSuccess("Account settings successfully updated")
+
+            updateUser({
+                username: inputs.username,
+                email: inputs.email,
+                bio: inputs.bio
+            })
         }).catch(error => {
             console.error(error)
             // setError("The current password is not correct.")

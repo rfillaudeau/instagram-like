@@ -3,6 +3,7 @@ import {useParams} from "react-router-dom"
 import PostPreview from "../components/PostPreview"
 import axios from "axios"
 import nl2br from "../utils/nl2br"
+import abbreviateNumber from "../utils/abreviateNumber"
 
 function Profile() {
     const {username} = useParams()
@@ -68,7 +69,7 @@ function Profile() {
 
                                         <div className="row mb-3">
                                             <div className="col">
-                                                <b>1,654</b> posts
+                                                <b>{abbreviateNumber(user.postCount)}</b> post{user.postCount > 1 ? "s" : ""}
                                             </div>
                                             <div className="col text-center">
                                                 <b>55k</b> followers

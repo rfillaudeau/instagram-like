@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -17,6 +18,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public const ROLE_USER = 'ROLE_USER';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
+
+    public const GROUP_READ = 'user:read';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -51,9 +54,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:create', 'user:update:password'])]
     private ?string $plainPassword = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['user:read', 'user:update'])]
     private ?string $bio;
+
+    #[ORM\Column]
+    #[Groups(['user:read'])]
+    private ?int $postCount;
 
     public function getId(): ?int
     {
@@ -191,6 +198,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->bio = $bio;
 
+        return $this;
+    }
+
+    public function getPostCount(): ?int
+    {
+        return $this->postCount;
+    }
+
+    public function setPostCount(?int $postCount): self
+    {
+        $this->postCount = $postCount;
         return $this;
     }
 }

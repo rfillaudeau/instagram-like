@@ -1,11 +1,56 @@
-import React from "react"
+import React, {useEffect, useRef, useState} from "react"
 import PostCard from "../components/PostCard"
+import PostForm from "./PostForm"
+import axios from "axios"
 
 function Feed() {
-    const posts = [1, 2, 3, 4, 5, 6].map((post, index) => (
-        <div key={index} className="row justify-content-center">
+    const [posts, setPosts] = useState([])
+    const [page, setPage] = useState(1)
+    const loadMoreButtonRef = useRef(null)
+
+    useEffect(() => {
+        loadMoreButtonRef.current.disabled = true
+
+        console.log(posts)
+
+        axios
+            .get("/api/posts/feed", {
+                params: {
+                    page: page
+                }
+            })
+            .then(response => {
+                // TODO: Fix double set on start (due to StrictMode)
+                setPosts(prevPosts => [
+                    ...prevPosts,
+                    ...response.data
+                ])
+            })
+            .catch(error => {
+                console.log(error)
+                console.log("Unknown error")
+            })
+            .finally(() => {
+                loadMoreButtonRef.current.disabled = false
+            })
+    }, [page])
+
+    function loadNewPage() {
+        setPage(prevPage => prevPage + 1)
+    }
+
+    if (user === null) {
+        return (
+            <div>
+                Loading...
+            </div>
+        )
+    }
+
+    const postElements = posts.map((post, index) => (
+        <div key={index} className="row justify-content-center my-3">
             <div className="col-auto">
-                <PostCard />
+                <PostCard post={post} />
             </div>
         </div>
     ))
@@ -15,7 +60,18 @@ function Feed() {
             <div className="container">
                 <div className="row justify-content-center">
                     <div className="col-5">
-                        {posts}
+                        <PostForm />
+
+                        {postElements}
+
+                        <button
+                            type="button"
+                            className="btn btn-outline-secondary w-100"
+                            ref={loadMoreButtonRef}
+                            onClick={loadNewPage}
+                        >
+                            Load more
+                        </button>
                     </div>
                 </div>
             </div>

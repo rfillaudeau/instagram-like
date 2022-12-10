@@ -16,12 +16,18 @@ function Header() {
 
                     <ul className="nav me-auto justify-content-center">
                         <li>
-                            <Link to="/" className={`nav-link px-2 ${pathname === "/" ? "text-white" : "text-secondary"}`}>
+                            <Link
+                                to="/"
+                                className={`nav-link px-2 ${pathname === "/" ? "text-white" : "text-secondary"}`}
+                            >
                                 Home
                             </Link>
                         </li>
                         <li>
-                            <Link to="/discover" className={`nav-link px-2 ${pathname === "/discover" ? "text-white" : "text-secondary"}`}>
+                            <Link
+                                to="/discover"
+                                className={`nav-link px-2 ${pathname === "/discover" ? "text-white" : "text-secondary"}`}
+                            >
                                 Discover
                             </Link>
                         </li>
@@ -36,7 +42,7 @@ function Header() {
                                             Sign In
                                         </Link>
                                     </li>
-                                    <li className="nav-item">
+                                    <li className="nav-item ms-3">
                                         <Link to="/sign-up" className="btn btn-primary">Sign Up</Link>
                                     </li>
                                 </ul>
