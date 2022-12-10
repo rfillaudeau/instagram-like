@@ -10,8 +10,12 @@ function Profile() {
     const [user, setUser] = useState(null)
 
     useEffect(() => {
+        const controller = new AbortController()
+
         axios
-            .get(`/api/users/${username}`)
+            .get(`/api/users/${username}`, {
+                signal: controller.signal
+            })
             .then(response => {
                 setUser(response.data)
             }).catch(error => {
@@ -21,6 +25,10 @@ function Profile() {
                     console.log("Unknown error")
                 }
             })
+
+        return () => {
+            controller.abort()
+        }
     }, [])
 
     if (user === null) {

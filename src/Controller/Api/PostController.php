@@ -61,7 +61,7 @@ class PostController extends AbstractApiController
         $jsonPost = $this->serializer->serialize(
             $post,
             JsonEncoder::FORMAT,
-            [AbstractNormalizer::GROUPS => [Post::GROUP_READ]]
+            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
         );
 
         return new JsonResponse($jsonPost, Response::HTTP_OK, [], true);

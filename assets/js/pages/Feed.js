@@ -11,10 +11,11 @@ function Feed() {
     useEffect(() => {
         loadMoreButtonRef.current.disabled = true
 
-        console.log(posts)
+        const controller = new AbortController()
 
         axios
             .get("/api/posts/feed", {
+                signal: controller.signal,
                 params: {
                     page: page
                 }
@@ -33,6 +34,10 @@ function Feed() {
             .finally(() => {
                 loadMoreButtonRef.current.disabled = false
             })
+
+        return () => {
+            controller.abort()
+        }
     }, [page])
 
     function loadNewPage() {

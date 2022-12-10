@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react"
 import {Link, useParams} from "react-router-dom"
-import axios from "axios"
+import axios, {CanceledError} from "axios"
 import nl2br from "../utils/nl2br"
 
 function Post() {
@@ -8,18 +8,30 @@ function Post() {
     const [post, setPost] = useState(null)
 
     useEffect(() => {
+        const controller = new AbortController()
+
         axios
-            .get(`/api/posts/${id}`)
+            .get(`/api/posts/${id}`, {
+                signal: controller.signal
+            })
             .then(response => {
                 console.log(response.data)
                 setPost(response.data)
             }).catch(error => {
-            if (error.response.status === 404) {
-                console.log("Post not found")
-            } else {
-                console.log("Unknown error")
-            }
-        })
+                if (error instanceof CanceledError) {
+                    return
+                }
+
+                if (error.response.status === 404) {
+                    console.log("Post not found")
+                } else {
+                    console.log("Unknown error")
+                }
+            })
+
+        return () => {
+            controller.abort()
+        }
     }, [])
 
     if (post === null) {
