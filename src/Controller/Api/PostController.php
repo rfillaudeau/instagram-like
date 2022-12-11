@@ -6,6 +6,7 @@ use App\Entity\Post;
 use App\Entity\User;
 use App\Repository\PostRepository;
 use App\Repository\UserRepository;
+use App\Security\PostVoter;
 use App\Service\ImageResizer;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -35,14 +36,17 @@ class PostController extends AbstractApiController
     #[IsGranted(User::ROLE_USER)]
     public function feed(Request $request): JsonResponse
     {
-        $page = $request->query->get('page', 1);
+        $page = $request->query->getInt('page');
         if ($page <= 0) {
             $page = 1;
         }
 
-        $maxResults = 2;
+        $maxResults = $request->query->getInt('itemsPerPage');
+        if ($page <= 0) {
+            $maxResults = 10;
+        }
+
         $firstResult = ($page - 1) * $maxResults;
-        dump($firstResult);
 
         $posts = $this->postRepository->findByFollowing($this->getUser(), $firstResult, $maxResults);
 
@@ -55,7 +59,7 @@ class PostController extends AbstractApiController
         return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}', name: 'read', requirements: ['page' => '\d+'], methods: [Request::METHOD_GET])]
+    #[Route('/{id}', name: 'read', requirements: ['id' => '\d+'], methods: [Request::METHOD_GET])]
     public function read(Post $post): JsonResponse
     {
         $jsonPost = $this->serializer->serialize(
@@ -128,18 +132,22 @@ class PostController extends AbstractApiController
         return new JsonResponse(null, Response::HTTP_CREATED);
     }
 
-    #[Route('/{id}', name: 'update', requirements: ['page' => '\d+'], methods: [Request::METHOD_PUT])]
+    #[Route('/{id}', name: 'update', requirements: ['id' => '\d+'], methods: [Request::METHOD_PUT])]
     #[IsGranted(User::ROLE_USER)]
     public function update(Post $post): JsonResponse
     {
+        $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
+
         return new JsonResponse();
     }
 
-    #[Route('/{id}', name: 'delete', requirements: ['page' => '\d+'], methods: [Request::METHOD_DELETE])]
+    #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
     #[IsGranted(User::ROLE_USER)]
-    public function delete()
+    public function delete(Post $post): JsonResponse
     {
+        $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
 
+        return new JsonResponse();
     }
 
     public function list()

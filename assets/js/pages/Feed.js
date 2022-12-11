@@ -4,6 +4,7 @@ import PostForm from "./PostForm"
 import axios from "axios"
 
 function Feed() {
+    const postsPerPage = 5
     const [posts, setPosts] = useState([])
     const [page, setPage] = useState(1)
     const loadMoreButtonRef = useRef(null)
@@ -17,11 +18,11 @@ function Feed() {
             .get("/api/posts/feed", {
                 signal: controller.signal,
                 params: {
-                    page: page
+                    page: page,
+                    itemsPerPage: postsPerPage
                 }
             })
             .then(response => {
-                // TODO: Fix double set on start (due to StrictMode)
                 setPosts(prevPosts => [
                     ...prevPosts,
                     ...response.data

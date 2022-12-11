@@ -19,22 +19,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_USER = 'ROLE_USER';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
 
+    public const GROUP_DEFAULT = 'Default';
     public const GROUP_READ = 'user:read';
+    public const GROUP_CREATE = 'user:create';
+    public const GROUP_UPDATE = 'user:update';
+    public const GROUP_UPDATE_PASSWORD = 'user:update:password';
+    public const GROUP_UPDATE_AVATAR = 'user:update:avatar';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read'])]
+    #[Groups([self::GROUP_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups([self::GROUP_READ, self::GROUP_CREATE, self::GROUP_UPDATE])]
     #[Assert\NotBlank]
     #[Assert\Length(min: 2, max: 30)]
     private ?string $username = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups([self::GROUP_READ, self::GROUP_CREATE, self::GROUP_UPDATE])]
     #[Assert\NotBlank]
     #[Assert\Email]
     #[Assert\Length(max: 180)]
@@ -49,18 +54,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[Assert\NotBlank(groups: ['user:create', 'user:update:password'])]
-    #[Assert\Length(min: 6, groups: ['user:create', 'user:update:password'])]
-    #[Groups(['user:create', 'user:update:password'])]
+    #[Assert\NotBlank(groups: [self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
+    #[Assert\Length(min: 6, groups: [self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
+    #[Groups([self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
     private ?string $plainPassword = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['user:read', 'user:update'])]
+    #[Groups([self::GROUP_READ, self::GROUP_UPDATE])]
     private ?string $bio;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups([self::GROUP_READ, self::GROUP_UPDATE_AVATAR])]
+    #[Assert\NotBlank(groups: [self::GROUP_UPDATE_AVATAR])]
+    private ?string $avatarFilename = null;
+
     #[ORM\Column]
-    #[Groups(['user:read'])]
-    private ?int $postCount;
+    #[Groups([self::GROUP_READ])]
+    private int $postCount = 0;
 
     public function getId(): ?int
     {
@@ -201,12 +211,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getPostCount(): ?int
+    public function getAvatarFilename(): ?string
+    {
+        return $this->avatarFilename;
+    }
+
+    public function setAvatarFilename(?string $avatarFilename): self
+    {
+        $this->avatarFilename = $avatarFilename;
+        return $this;
+    }
+
+    public function getPostCount(): int
     {
         return $this->postCount;
     }
 
-    public function setPostCount(?int $postCount): self
+    public function setPostCount(int $postCount): self
     {
         $this->postCount = $postCount;
         return $this;

@@ -17,36 +17,36 @@ class Post
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     #[Assert\NotBlank]
     private ?string $pictureFilename = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     #[Assert\NotBlank]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     #[MaxDepth(1)]
     private ?User $user = null;
 
     #[ORM\Column]
-    #[Groups(['post:read'])]
+    #[Groups([self::GROUP_READ])]
     private int $likeCount = 0;
 
     public function getId(): ?int

@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from "react"
 import {Link, useParams} from "react-router-dom"
 import axios, {CanceledError} from "axios"
-import nl2br from "../utils/nl2br"
+import nl2br from "../../utils/nl2br"
+import PostPlaceholder from "./PostPlaceholder"
 
 function Post() {
     const {id} = useParams()
@@ -18,16 +19,16 @@ function Post() {
                 console.log(response.data)
                 setPost(response.data)
             }).catch(error => {
-                if (error instanceof CanceledError) {
-                    return
-                }
+            if (error instanceof CanceledError) {
+                return
+            }
 
-                if (error.response.status === 404) {
-                    console.log("Post not found")
-                } else {
-                    console.log("Unknown error")
-                }
-            })
+            if (error.response.status === 404) {
+                console.log("Post not found")
+            } else {
+                console.log("Unknown error")
+            }
+        })
 
         return () => {
             controller.abort()
@@ -35,11 +36,7 @@ function Post() {
     }, [])
 
     if (post === null) {
-        return (
-            <div>
-                Loading...
-            </div>
-        )
+        return <PostPlaceholder />
     }
 
     return (
@@ -58,19 +55,26 @@ function Post() {
                                         />
                                     </div>
                                     <div className="col-5">
-                                        <Link to={`/@${post.user.username}`} className="d-flex text-decoration-none">
-                                            <img
-                                                src="/doge.jpg"
-                                                className="rounded img-fluid"
-                                                alt="test"
-                                                style={{width: 25}}
-                                            />
-                                            <div className="align-self-center ps-1 fw-semibold small link-dark">
-                                                {post.user.username}
+                                        <div className="d-flex mb-3">
+                                            <div className="align-self-center">
+                                                <Link to={`/@${post.user.username}`}>
+                                                    <img
+                                                        src="/doge.jpg"
+                                                        className="rounded img-fluid avatar-sm"
+                                                        alt="test"
+                                                    />
+                                                </Link>
                                             </div>
-                                            Follow
-                                        </Link>
-                                        <p className="mb-0">{nl2br(post.description)}</p>
+                                            <div className="align-self-center ps-1 fw-semibold small flex-fill mx-3">
+                                                <Link to={`/@${post.user.username}`} className="text-decoration-none link-dark">
+                                                    {post.user.username}
+                                                </Link>
+                                            </div>
+                                            <a href="#" className="btn btn-primary">
+                                                Follow
+                                            </a>
+                                        </div>
+                                        <p className="mb-3">{nl2br(post.description)}</p>
                                         <p>Date</p>
                                     </div>
                                 </div>
