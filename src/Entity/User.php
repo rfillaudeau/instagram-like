@@ -24,7 +24,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const GROUP_CREATE = 'user:create';
     public const GROUP_UPDATE = 'user:update';
     public const GROUP_UPDATE_PASSWORD = 'user:update:password';
-    public const GROUP_UPDATE_AVATAR = 'user:update:avatar';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -64,13 +63,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $bio;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups([self::GROUP_READ, self::GROUP_UPDATE_AVATAR])]
-    #[Assert\NotBlank(groups: [self::GROUP_UPDATE_AVATAR])]
+    #[Groups([self::GROUP_READ])]
     private ?string $avatarFilename = null;
 
     #[ORM\Column]
     #[Groups([self::GROUP_READ])]
     private int $postCount = 0;
+
+    #[ORM\Column]
+    #[Groups([self::GROUP_READ])]
+    private int $followingCount = 0;
+
+    #[ORM\Column]
+    #[Groups([self::GROUP_READ])]
+    private int $followerCount = 0;
 
     public function getId(): ?int
     {
@@ -230,6 +236,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPostCount(int $postCount): self
     {
         $this->postCount = $postCount;
+        return $this;
+    }
+
+    public function getFollowingCount(): int
+    {
+        return $this->followingCount;
+    }
+
+    public function setFollowingCount(int $followingCount): self
+    {
+        $this->followingCount = $followingCount;
+        return $this;
+    }
+
+    public function getFollowerCount(): int
+    {
+        return $this->followerCount;
+    }
+
+    public function setFollowerCount(int $followerCount): self
+    {
+        $this->followerCount = $followerCount;
         return $this;
     }
 }

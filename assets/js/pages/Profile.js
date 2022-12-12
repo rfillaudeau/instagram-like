@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react"
 import {useParams} from "react-router-dom"
 import PostPreview from "../components/PostPreview"
-import axios from "axios"
+import axios, {CanceledError} from "axios"
 import nl2br from "../utils/nl2br"
 import abbreviateNumber from "../utils/abreviateNumber"
 
@@ -18,12 +18,18 @@ function Profile() {
             })
             .then(response => {
                 setUser(response.data)
-            }).catch(error => {
-                if (error.response.status === 404) {
-                    console.log("User not found")
-                } else {
-                    console.log("Unknown error")
+            })
+            .catch(error => {
+                if (error instanceof CanceledError) {
+                    return
                 }
+
+                console.error(error)
+                // if (error.response.status === 404) {
+                //     console.log("User not found")
+                // } else {
+                //     console.log("Unknown error")
+                // }
             })
 
         return () => {
@@ -39,6 +45,14 @@ function Profile() {
         )
     }
 
+    function getAvatarPath(filename) {
+        if (filename === null) {
+            return "/doge.jpg"
+        }
+
+        return `/uploads/avatars/${filename}`
+    }
+
     let posts = []
     for (let i = 0; i < 20; i++) {
         posts.push({
@@ -48,7 +62,7 @@ function Profile() {
     }
 
     const postElements = posts.map((post, index) => (
-        <div key={index} className="col p-2">
+        <div key={index} className="col m-2 p-0">
             <PostPreview />
         </div>
     ))
@@ -61,11 +75,14 @@ function Profile() {
                         <div className="card mb-2">
                             <div className="card-body">
                                 <div className="d-flex">
-                                    <div className="me-3 w-auto">
-                                        <img src="/doge.jpg" className="rounded img-fluid" alt="test" style={{width: 100}} />
+                                    <div className="me-3">
+                                        <img
+                                            src={getAvatarPath(user.avatarFilename)}
+                                            className="rounded img-fluid avatar-lg"
+                                            alt={`${user.username}'s avatar`} />
                                     </div>
 
-                                    <div className="w-100">
+                                    <div className="flex-fill">
                                         <div className="d-flex mb-3">
                                             <div className="flex-grow-1 fs-2 fw-semibold">
                                                 {user.username}
@@ -98,8 +115,6 @@ function Profile() {
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </main>
     )

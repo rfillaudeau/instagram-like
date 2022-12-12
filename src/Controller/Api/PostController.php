@@ -2,12 +2,15 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Like;
 use App\Entity\Post;
 use App\Entity\User;
+use App\Repository\LikeRepository;
 use App\Repository\PostRepository;
 use App\Repository\UserRepository;
 use App\Security\PostVoter;
 use App\Service\ImageResizer;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
@@ -57,6 +60,56 @@ class PostController extends AbstractApiController
         );
 
         return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/{id}/like', name: 'like', requirements: ['id' => '\d+'], methods: [Request::METHOD_POST])]
+    #[IsGranted(User::ROLE_USER)]
+    public function like(
+        Post $post,
+        LikeRepository $likeRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        $user = $this->getUser();
+
+        $like = $likeRepository->findOneByUserAndPost($user, $post);
+        if (null !== $like) {
+            return new JsonResponse(null, Response::HTTP_OK);
+        }
+
+        $like = (new Like())
+            ->setPost($post)
+            ->setUser($user);
+
+        $entityManager->persist($like);
+        $entityManager->flush();
+
+        $this->postRepository->incrementLikeCount($post);
+
+        return new JsonResponse(null, Response::HTTP_CREATED);
+    }
+
+    #[Route('/{id}/like', name: 'unlike', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
+    #[IsGranted(User::ROLE_USER)]
+    public function unlike(
+        Post $post,
+        LikeRepository $likeRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        $user = $this->getUser();
+
+        $like = $likeRepository->findOneByUserAndPost($user, $post);
+        if (null === $like) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        }
+
+        $entityManager->remove($like);
+        $entityManager->flush();
+
+        $this->postRepository->decrementLikeCount($post);
+
+        return new JsonResponse(null, Response::HTTP_OK);
     }
 
     #[Route('/{id}', name: 'read', requirements: ['id' => '\d+'], methods: [Request::METHOD_GET])]

@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react"
 import PostCard from "../components/PostCard"
 import PostForm from "./PostForm"
-import axios from "axios"
+import axios, {CanceledError} from "axios"
 
 function Feed() {
     const postsPerPage = 5
@@ -29,8 +29,11 @@ function Feed() {
                 ])
             })
             .catch(error => {
-                console.log(error)
-                console.log("Unknown error")
+                if (error instanceof CanceledError) {
+                    return
+                }
+
+                console.error(error)
             })
             .finally(() => {
                 loadMoreButtonRef.current.disabled = false

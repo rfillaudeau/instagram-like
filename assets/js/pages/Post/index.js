@@ -18,17 +18,18 @@ function Post() {
             .then(response => {
                 console.log(response.data)
                 setPost(response.data)
-            }).catch(error => {
-            if (error instanceof CanceledError) {
-                return
-            }
+            })
+            .catch(error => {
+                if (error instanceof CanceledError) {
+                    return
+                }
 
-            if (error.response.status === 404) {
-                console.log("Post not found")
-            } else {
-                console.log("Unknown error")
-            }
-        })
+                if (error.response.status === 404) {
+                    console.log("Post not found")
+                } else {
+                    console.log("Unknown error")
+                }
+            })
 
         return () => {
             controller.abort()
@@ -36,7 +37,7 @@ function Post() {
     }, [])
 
     if (post === null) {
-        return <PostPlaceholder />
+        return <PostPlaceholder/>
     }
 
     return (
@@ -66,7 +67,8 @@ function Post() {
                                                 </Link>
                                             </div>
                                             <div className="align-self-center ps-1 fw-semibold small flex-fill mx-3">
-                                                <Link to={`/@${post.user.username}`} className="text-decoration-none link-dark">
+                                                <Link to={`/@${post.user.username}`}
+                                                      className="text-decoration-none link-dark">
                                                     {post.user.username}
                                                 </Link>
                                             </div>

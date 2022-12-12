@@ -59,6 +59,26 @@ class PostRepository extends ServiceEntityRepository
         ;
     }
 
+    public function incrementLikeCount(Post $post): void
+    {
+        $this->getEntityManager()
+            ->createQuery(
+                'UPDATE App\\Entity\\Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :id'
+            )
+            ->setParameter('id', $post->getId())
+            ->execute();
+    }
+
+    public function decrementLikeCount(Post $post): void
+    {
+        $this->getEntityManager()
+            ->createQuery(
+                'UPDATE App\\Entity\\Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :id'
+            )
+            ->setParameter('id', $post->getId())
+            ->execute();
+    }
+
 //    /**
 //     * @return Post[] Returns an array of Post objects
 //     */

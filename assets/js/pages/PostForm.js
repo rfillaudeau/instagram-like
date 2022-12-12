@@ -28,9 +28,6 @@ function PostForm() {
             return
         }
 
-        console.log(inputs)
-        console.log(fileInputs)
-
         let formData = new FormData()
         formData.append("picture", fileInputs.picture[0])
         formData.append("description", inputs.description)

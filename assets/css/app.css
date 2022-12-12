@@ -10,3 +10,13 @@ body {
     width: 32px;
     height: 32px;
 }
+
+.avatar-md {
+    width: 75px;
+    height: 75px;
+}
+
+.avatar-lg {
+    width: 150px;
+    height: 150px;
+}
