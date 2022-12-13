@@ -161,9 +161,8 @@ class UserSettingsController extends AbstractApiController
                 $filesystem = new Filesystem();
 
                 try {
-                    $filesystem->remove(sprintf('%s%s%s',
+                    $filesystem->remove(sprintf('%s/%s',
                         $this->getParameter('avatars_directory'),
-                        DIRECTORY_SEPARATOR,
                         $previousAvatarFilename
                     ));
                 } catch (IOException $exception) {
@@ -173,7 +172,11 @@ class UserSettingsController extends AbstractApiController
             }
 
             return new JsonResponse([
-                'avatarFilename' => $user->getAvatarFilename()
+                'avatarFilename' => $user->getAvatarFilename(),
+                'avatarFilepath' => sprintf('%s/%s',
+                    $this->getParameter('avatars_relative_directory'),
+                    $user->getAvatarFilename()
+                )
             ]);
         }
 

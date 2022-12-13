@@ -39,19 +39,25 @@ class PostController extends AbstractApiController
     #[IsGranted(User::ROLE_USER)]
     public function feed(Request $request): JsonResponse
     {
-        $page = $request->query->getInt('page');
-        if ($page <= 0) {
-            $page = 1;
-        }
-
-        $maxResults = $request->query->getInt('itemsPerPage');
-        if ($page <= 0) {
-            $maxResults = 10;
-        }
-
-        $firstResult = ($page - 1) * $maxResults;
+        list($firstResult, $maxResults) = self::getPagination($request);
 
         $posts = $this->postRepository->findByFollowing($this->getUser(), $firstResult, $maxResults);
+
+        $jsonPosts = $this->serializer->serialize(
+            $posts,
+            JsonEncoder::FORMAT,
+            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
+        );
+
+        return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/discover', name: 'discover', methods: [Request::METHOD_GET])]
+    public function discover(Request $request): JsonResponse
+    {
+        list($firstResult, $maxResults) = self::getPagination($request);
+
+        $posts = $this->postRepository->findByLatest($firstResult, $maxResults);
 
         $jsonPosts = $this->serializer->serialize(
             $posts,

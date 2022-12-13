@@ -99,6 +99,42 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->execute();
     }
 
+    public function incrementFollowerCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.followerCount = u.followerCount + 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
+    public function decrementFollowerCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.followerCount = u.followerCount - 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
+    public function incrementFollowingCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.followingCount = u.followingCount + 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
+    public function decrementFollowingCount(User $user): void
+    {
+        $this->getEntityManager()->createQuery(
+            'UPDATE App\\Entity\\User u SET u.followingCount = u.followingCount - 1 WHERE u.id = :id'
+        )
+            ->setParameter('id', $user->getId())
+            ->execute();
+    }
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */

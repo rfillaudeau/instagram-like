@@ -2,9 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\Follow;
 use App\Entity\Post;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -49,14 +51,49 @@ class PostRepository extends ServiceEntityRepository
     public function findByFollowing(User $user, int $firstResult = 0, int $maxResults = 10): array
     {
         return $this->createQueryBuilder('p')
+            ->distinct()
+            ->leftJoin(Follow::class, 'f', Join::WITH, 'f.user = :user')
+            ->andWhere('p.user = :user')
+            ->orWhere('p.user = f.following')
+            ->setParameter('user', $user)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setFirstResult($firstResult)
+            ->setMaxResults($maxResults)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param int $firstResult
+     * @param int $maxResults
+     * @return Post[]|array
+     */
+    public function findByLatest(int $firstResult = 0, int $maxResults = 10): array
+    {
+        return $this->createQueryBuilder('p')
+            ->orderBy('p.createdAt', 'DESC')
+            ->setFirstResult($firstResult)
+            ->setMaxResults($maxResults)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @param User $user
+     * @param int $firstResult
+     * @param int $maxResults
+     * @return Post[]|array
+     */
+    public function findByUser(User $user, int $firstResult = 0, int $maxResults = 10): array
+    {
+        return $this->createQueryBuilder('p')
             ->andWhere('p.user = :user')
             ->setParameter('user', $user)
             ->orderBy('p.createdAt', 'DESC')
             ->setFirstResult($firstResult)
             ->setMaxResults($maxResults)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     public function incrementLikeCount(Post $post): void

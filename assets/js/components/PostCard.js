@@ -11,14 +11,6 @@ function PostCard({post}) {
 
     const createdAtDate = (new Date(post.createdAt)).toLocaleString()
 
-    function getAvatarPath(filename) {
-        if (filename === null) {
-            return "/doge.jpg"
-        }
-
-        return `/uploads/avatars/${filename}`
-    }
-
     function changeLike() {
         likeButtonRef.current.disabled = true
 
@@ -59,7 +51,7 @@ function PostCard({post}) {
                 <div>
                     <Link to={`/@${post.user.username}`} className="">
                         <img
-                            src={getAvatarPath(post.user.avatarFilename)}
+                            src={post.user.avatarFilepath}
                             className="rounded img-fluid avatar-sm"
                             alt={`${post.user.username}'s avatar`}
                         />
@@ -73,7 +65,7 @@ function PostCard({post}) {
                 </div>
             </div>
 
-            <img src={`/uploads/posts/${post.pictureFilename}`} className="img-fluid" alt="..." />
+            <img src={post.pictureFilepath} className="img-fluid" alt="..." />
 
             <div className="card-body">
                 <div className="d-flex align-items-center mb-3">

@@ -2,9 +2,8 @@
 
 namespace App\Serializer;
 
-use App\Entity\Post;
 use App\Entity\User;
-use App\Repository\LikeRepository;
+use App\Repository\FollowRepository;
 use ArrayObject;
 use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -13,20 +12,21 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class PostNormalizer implements NormalizerInterface
+class UserNormalizer implements NormalizerInterface
 {
     public function __construct(
         // Known issue workaround (https://github.com/symfony/maker-bundle/issues/1252)
         #[Autowire(service: ObjectNormalizer::class)]
         private readonly NormalizerInterface $normalizer,
         private readonly Security $security,
-        private readonly LikeRepository $likeRepository,
-        private readonly string $postsRelativeDirectory
+        private readonly FollowRepository $followRepository,
+        private readonly string $defaultAvatarRelativePath,
+        private readonly string $avatarsRelativeDirectory
     )
     {}
 
     /**
-     * @param Post $object
+     * @param User $object
      * @param string|null $format
      * @param array $context
      * @return float|array|ArrayObject|bool|int|string|null
@@ -39,18 +39,26 @@ class PostNormalizer implements NormalizerInterface
         /** @var User $user */
         $user = $this->security->getUser();
 
-        $data['isLiked'] = null !== $user && null !== $this->likeRepository->findOneByUserAndPost($user, $object);
-        $data['pictureFilepath'] = sprintf(
-            '%s/%s',
-            $this->postsRelativeDirectory,
-            $object->getPictureFilename()
-        );
+        $data['isFollowed'] = null !== $user &&
+            $user !== $object &&
+            null !== $this->followRepository->findOneByUserAndFollowing($user, $object);
+
+        $avatarFilepath = $this->defaultAvatarRelativePath;
+        if (null !== $object->getAvatarFilename()) {
+            $avatarFilepath = sprintf(
+                '%s/%s',
+                $this->avatarsRelativeDirectory,
+                $object->getAvatarFilename()
+            );
+        }
+
+        $data['avatarFilepath'] = $avatarFilepath;
 
         return $data;
     }
 
     public function supportsNormalization(mixed $data, string $format = null, array $context = []): bool
     {
-        return $data instanceof Post;
+        return $data instanceof User;
     }
 }

@@ -1,17 +1,13 @@
 import React, {useEffect, useRef, useState} from "react"
-import PostCard from "../components/PostCard"
-import PostForm from "./PostForm"
+import PostPreview from "../../components/PostPreview"
 import axios, {CanceledError} from "axios"
-import useForceUpdate from "../hooks/useForceUpdate"
-import PostFormModal from "../components/PostFormModal"
 
-function Feed() {
-    const postsPerPage = 5
+function ProfilePosts({user}) {
+    const postsPerPage = 9
     const [posts, setPosts] = useState([])
     const [page, setPage] = useState(1)
     const [canLoadMore, setCanLoadMore] = useState(true)
     const loadMoreButtonRef = useRef(null)
-    const {updateState, forceUpdate} = useForceUpdate()
 
     useEffect(() => {
         if (loadMoreButtonRef !== null) {
@@ -21,7 +17,7 @@ function Feed() {
         const controller = new AbortController()
 
         axios
-            .get("/api/posts/feed", {
+            .get(`/api/users/${user.username}/posts`, {
                 signal: controller.signal,
                 params: {
                     page: page,
@@ -56,27 +52,17 @@ function Feed() {
         return () => {
             controller.abort()
         }
-    }, [page, updateState])
+    }, [page])
+
+    const postElements = posts.map((post, index) => (
+        <div key={index} className="col-4 p-2">
+            <PostPreview post={post} />
+        </div>
+    ))
 
     function loadNewPage() {
         setPage(prevPage => prevPage + 1)
     }
-
-    if (user === null) {
-        return (
-            <div>
-                Loading...
-            </div>
-        )
-    }
-
-    const postElements = posts.map((post, index) => (
-        <div key={index} className="row justify-content-center my-3">
-            <div className="col-auto">
-                <PostCard post={post} />
-            </div>
-        </div>
-    ))
 
     let loadMoreButton = null
     if (canLoadMore) {
@@ -92,42 +78,13 @@ function Feed() {
         )
     }
 
-    function handlePostCreation() {
-        setPage(1)
-        setPosts([])
-        setCanLoadMore(true)
-
-        forceUpdate()
-    }
-
     return (
-        <main className="p-2">
-            <div className="container">
+        <div className="row mx-0">
+            {postElements}
 
-
-                <div className="row justify-content-center">
-                    <div className="col-5">
-                        {/*<PostForm onCreate={handlePostCreation} />*/}
-
-                        <button
-                            type="button"
-                            className="btn btn-primary w-100"
-                            data-bs-toggle="modal"
-                            data-bs-target="#staticBackdrop"
-                        >
-                            New post
-                        </button>
-
-                        {postElements}
-
-                        {loadMoreButton}
-                    </div>
-                </div>
-
-                <PostFormModal/>
-            </div>
-        </main>
+            {loadMoreButton}
+        </div>
     )
 }
 
-export default Feed
+export default ProfilePosts

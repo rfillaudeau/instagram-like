@@ -9,11 +9,8 @@ function PostPlaceholder() {
                         <div className="card mb-2">
                             <div className="card-body">
                                 <div className="row">
-                                    <div className="col-7 placeholder-glow">
-                                        <div
-                                            className="rounded img-fluid bg-dark placeholder"
-                                            style={{width: 500, height: 500}}
-                                        ></div>
+                                    <div className="col-7 placeholder-glow pe-2">
+                                        <div className="rounded img-fluid bg-dark placeholder square"></div>
                                     </div>
                                     <div className="col-5 placeholder-glow">
                                         <div className="d-flex mb-3">

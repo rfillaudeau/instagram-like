@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from "react"
 import {useParams} from "react-router-dom"
-import PostPreview from "../components/PostPreview"
 import axios, {CanceledError} from "axios"
-import nl2br from "../utils/nl2br"
-import abbreviateNumber from "../utils/abreviateNumber"
+import nl2br from "../../utils/nl2br"
+import abbreviateNumber from "../../utils/abreviateNumber"
+import FollowButton from "../../components/FollowButton"
+import ProfilePosts from "./ProfilePosts"
 
 function Profile() {
     const {username} = useParams()
@@ -45,27 +46,22 @@ function Profile() {
         )
     }
 
-    function getAvatarPath(filename) {
-        if (filename === null) {
-            return "/doge.jpg"
-        }
+    function handleFollow(isFollowed) {
+        setUser(prevUser => {
+            let newUser = {
+                ...prevUser,
+                isFollowed: isFollowed
+            }
 
-        return `/uploads/avatars/${filename}`
-    }
+            if (isFollowed) {
+                newUser.followerCount++
+            } else {
+                newUser.followerCount--
+            }
 
-    let posts = []
-    for (let i = 0; i < 20; i++) {
-        posts.push({
-            id: i,
-            picture: "/doge.jpg"
+            return newUser
         })
     }
-
-    const postElements = posts.map((post, index) => (
-        <div key={index} className="col m-2 p-0">
-            <PostPreview />
-        </div>
-    ))
 
     return (
         <main className="py-3">
@@ -77,18 +73,22 @@ function Profile() {
                                 <div className="d-flex">
                                     <div className="me-3">
                                         <img
-                                            src={getAvatarPath(user.avatarFilename)}
+                                            src={user.avatarFilepath}
                                             className="rounded img-fluid avatar-lg"
                                             alt={`${user.username}'s avatar`} />
                                     </div>
 
                                     <div className="flex-fill">
                                         <div className="d-flex mb-3">
-                                            <div className="flex-grow-1 fs-2 fw-semibold">
+                                            <div className="flex-fill fs-2 fw-semibold">
                                                 {user.username}
                                             </div>
                                             <div className="align-self-center">
-                                                <a className="btn btn-primary">Follow</a>
+                                                <FollowButton
+                                                    user={user}
+                                                    onFollow={() => handleFollow(true)}
+                                                    onUnfollow={() => handleFollow(false)}
+                                                />
                                             </div>
                                         </div>
 
@@ -97,10 +97,10 @@ function Profile() {
                                                 <b>{abbreviateNumber(user.postCount)}</b> post{user.postCount > 1 ? "s" : ""}
                                             </div>
                                             <div className="col text-center">
-                                                <b>55k</b> followers
+                                                <b>{abbreviateNumber(user.followerCount)}</b> follower{user.followerCount > 1 ? "s" : ""}
                                             </div>
                                             <div className="col text-end">
-                                                <b>9k</b> following
+                                                <b>{abbreviateNumber(user.followingCount)}</b> following
                                             </div>
                                         </div>
 
@@ -110,9 +110,7 @@ function Profile() {
                             </div>
                         </div>
 
-                        <div className="row row-cols-3">
-                            {postElements}
-                        </div>
+                        <ProfilePosts user={user}/>
                     </div>
                 </div>
             </div>

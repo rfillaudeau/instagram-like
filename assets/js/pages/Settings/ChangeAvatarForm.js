@@ -34,8 +34,11 @@ function ChangeAvatarForm() {
         }).then(response => {
             setSuccess("Avatar successfully updated")
 
+            console.log(response.data)
+
             updateUser({
-                avatarFilename: response.data.avatarFilename
+                avatarFilename: response.data.avatarFilename,
+                avatarFilepath: response.data.avatarFilepath
             })
         }).catch(error => {
             console.error(error)
@@ -77,33 +80,25 @@ function ChangeAvatarForm() {
         return true
     }
 
-    function getAvatarPath(filename) {
-        if (filename === null) {
-            return "/doge.jpg"
-        }
-
-        return `/uploads/avatars/${filename}`
-    }
-
     return (
         <form onSubmit={handleSubmit}>
             <h1 className="h3 mb-4">Change your avatar</h1>
 
             <div className="mb-3 d-flex">
                 <img
-                    src={getAvatarPath(currentUser.avatarFilename)}
+                    src={currentUser.avatarFilepath}
                     className="rounded avatar-lg align-self-lg-end me-3"
                     alt="Avatar large"
                 />
 
                 <img
-                    src={getAvatarPath(currentUser.avatarFilename)}
+                    src={currentUser.avatarFilepath}
                     className="rounded avatar-md align-self-lg-end me-3"
                     alt="Avatar medium"
                 />
 
                 <img
-                    src={getAvatarPath(currentUser.avatarFilename)}
+                    src={currentUser.avatarFilepath}
                     className="rounded avatar-sm align-self-lg-end"
                     alt="Avatar small"
                 />

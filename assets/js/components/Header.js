@@ -33,7 +33,7 @@ function Header() {
                         </li>
                     </ul>
 
-                    <div className="text-end justify-content-center">
+                    <div className="text-end justify-content-center d-flex">
                         {
                             currentUser === null ? (
                                 <ul className="nav">
@@ -47,38 +47,53 @@ function Header() {
                                     </li>
                                 </ul>
                             ) : (
-                                <ul className="navbar-nav">
-                                    <li className="nav-item dropdown">
-                                        <a
-                                            className="nav-link dropdown-toggle"
-                                            href="#"
-                                            data-bs-toggle="dropdown"
-                                            aria-expanded="false"
-                                        >
-                                            {currentUser.username}
-                                        </a>
-                                        <ul className="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <Link to={`/@${currentUser.username}`} className="dropdown-item">
-                                                    <i className="bi bi-person-circle"></i> Profile
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <Link to="/settings" className="dropdown-item">
-                                                    <i className="bi bi-gear-fill"></i> Settings
-                                                </Link>
-                                            </li>
-                                            <li>
-                                                <hr className="dropdown-divider" />
-                                            </li>
-                                            <li>
-                                                <a href="/sign-out" className="dropdown-item">
-                                                    <i className="bi bi-power"></i> Sign Out
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                </ul>
+                                <>
+                                    <ul className="nav mx-3">
+                                        <li className="nav-item">
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-primary w-100"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#staticBackdrop"
+                                            >
+                                                New post
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <ul className="navbar-nav">
+                                        <li className="nav-item dropdown">
+                                            <a
+                                                className="nav-link dropdown-toggle"
+                                                href="#"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false"
+                                            >
+                                                {currentUser.username}
+                                            </a>
+                                            <ul className="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <Link to={`/@${currentUser.username}`} className="dropdown-item">
+                                                        <i className="bi bi-person-circle"></i> Profile
+                                                    </Link>
+                                                </li>
+                                                <li>
+                                                    <Link to="/settings" className="dropdown-item">
+                                                        <i className="bi bi-gear-fill"></i> Settings
+                                                    </Link>
+                                                </li>
+                                                <li>
+                                                    <hr className="dropdown-divider" />
+                                                </li>
+                                                <li>
+                                                    <a href="/sign-out" className="dropdown-item">
+                                                        <i className="bi bi-power"></i> Sign Out
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </>
                             )
                         }
                     </div>

@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\Follow;
-use App\Entity\Like;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
@@ -27,7 +26,7 @@ class FollowRepository extends ServiceEntityRepository
     /**
      * @throws NonUniqueResultException
      */
-    public function findOneByUserAndFollowing(User $user, User $following): ?Like
+    public function findOneByUserAndFollowing(User $user, User $following): ?Follow
     {
         return $this->createQueryBuilder('f')
             ->andWhere('f.user = :user')

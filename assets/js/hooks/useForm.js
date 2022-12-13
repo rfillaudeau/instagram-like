@@ -12,7 +12,7 @@ function useForm(defaultInputs) {
         }))
     }
 
-    return {inputs, handleChange}
+    return {inputs, setInputs, handleChange}
 }
 
 export default useForm
