@@ -2,9 +2,8 @@ import React, {useRef, useState} from "react"
 import useForm from "../hooks/useForm"
 import {useParams} from "react-router-dom"
 import axios from "axios"
-import PostForm from "../pages/PostForm"
 
-function PostFormModal(props) {
+function PostFormModal({modalId}) {
     const defaultInputs = {
         description: ""
     }
@@ -18,6 +17,7 @@ function PostFormModal(props) {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
+    const cancelButtonRef = useRef(null)
     const params = useParams()
     const isEdit = "id" in params
 
@@ -49,9 +49,10 @@ function PostFormModal(props) {
 
             setSuccess("Post successfully created.")
 
-            if (props.onCreate instanceof Function) {
-                props.onCreate()
-            }
+            const customEvent = new CustomEvent("app:post-created", { detail: { name: 'primary' } })
+            document.dispatchEvent(customEvent)
+
+            cancelButtonRef.current.click()
         }).catch(error => {
             console.log(error)
         }).finally(() => {
@@ -99,18 +100,18 @@ function PostFormModal(props) {
     return (
         <div
             className="modal fade"
-            id="staticBackdrop"
+            id={modalId}
             data-bs-backdrop="static"
             data-bs-keyboard="false"
             tabIndex="-1"
-            aria-labelledby="staticBackdropLabel"
+            aria-labelledby={`${modalId}Label`}
             aria-hidden="true"
         >
             <div className="modal-dialog">
                 <div className="modal-content">
                     <form onSubmit={handleSubmit}>
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5" id="staticBackdropLabel">
+                            <h1 className="modal-title fs-5" id={`${modalId}Label`}>
                                 {isEdit ? "Edit post" : "New post"}
                             </h1>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -156,7 +157,15 @@ function PostFormModal(props) {
                         </div>
 
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button
+                                type="button"
+                                className="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                                ref={cancelButtonRef}
+                            >
+                                Cancel
+                            </button>
+
                             <button
                                 className="btn btn-primary"
                                 type="submit"

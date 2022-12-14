@@ -2,15 +2,14 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\Like;
 use App\Entity\Post;
 use App\Entity\User;
-use App\Repository\LikeRepository;
 use App\Repository\PostRepository;
 use App\Repository\UserRepository;
 use App\Security\PostVoter;
 use App\Service\ImageResizer;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
@@ -31,7 +30,10 @@ class PostController extends AbstractApiController
     public function __construct(
         private readonly SerializerInterface $serializer,
         private readonly ValidatorInterface $validator,
-        private readonly PostRepository $postRepository
+        private readonly PostRepository $postRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ImageResizer $imageResizer,
+        private readonly string $postsDirectory
     )
     {}
 
@@ -68,56 +70,6 @@ class PostController extends AbstractApiController
         return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/{id}/like', name: 'like', requirements: ['id' => '\d+'], methods: [Request::METHOD_POST])]
-    #[IsGranted(User::ROLE_USER)]
-    public function like(
-        Post $post,
-        LikeRepository $likeRepository,
-        EntityManagerInterface $entityManager
-    ): JsonResponse
-    {
-        $user = $this->getUser();
-
-        $like = $likeRepository->findOneByUserAndPost($user, $post);
-        if (null !== $like) {
-            return new JsonResponse(null, Response::HTTP_OK);
-        }
-
-        $like = (new Like())
-            ->setPost($post)
-            ->setUser($user);
-
-        $entityManager->persist($like);
-        $entityManager->flush();
-
-        $this->postRepository->incrementLikeCount($post);
-
-        return new JsonResponse(null, Response::HTTP_CREATED);
-    }
-
-    #[Route('/{id}/like', name: 'unlike', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
-    #[IsGranted(User::ROLE_USER)]
-    public function unlike(
-        Post $post,
-        LikeRepository $likeRepository,
-        EntityManagerInterface $entityManager
-    ): JsonResponse
-    {
-        $user = $this->getUser();
-
-        $like = $likeRepository->findOneByUserAndPost($user, $post);
-        if (null === $like) {
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
-        }
-
-        $entityManager->remove($like);
-        $entityManager->flush();
-
-        $this->postRepository->decrementLikeCount($post);
-
-        return new JsonResponse(null, Response::HTTP_OK);
-    }
-
     #[Route('/{id}', name: 'read', requirements: ['id' => '\d+'], methods: [Request::METHOD_GET])]
     public function read(Post $post): JsonResponse
     {
@@ -132,15 +84,8 @@ class PostController extends AbstractApiController
 
     #[Route('', name: 'create', methods: [Request::METHOD_POST])]
     #[IsGranted(User::ROLE_USER)]
-    public function create(
-        Request $request,
-        ImageResizer $imageResizer,
-        UserRepository $userRepository
-    ): JsonResponse
+    public function create(Request $request, UserRepository $userRepository): JsonResponse
     {
-        /** @var UploadedFile $picture */
-        $picture = $request->files->get('picture');
-
         $user = $this->getUser();
 
         $post = (new Post())
@@ -149,33 +94,15 @@ class PostController extends AbstractApiController
             ->setCreatedAt(new \DateTime())
             ->setUpdatedAt(new \DateTime());
 
-        /** @var File $finalFile */
-        $finalFile = null;
-        if (null !== $picture) {
-            $newFilename = sprintf('%s.%s', uniqid(), $picture->guessExtension());
+        $file = $this->handleNewPostPicture($request->files->get('picture'));
 
-            try {
-                $finalFile = $picture->move(
-                    $this->getParameter('posts_directory'),
-                    $newFilename
-                );
-
-                $imageResizer->resizePostPicture($finalFile->getPathname());
-            } catch (FileException $e) {
-                return new JsonResponse([
-                    'message' => 'Unable to save the file',
-                    'error' => $e->getMessage(),
-                ], Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-
-            $post->setPictureFilename($newFilename);
-        }
+        $post->setPictureFilename(null !== $file ? $file->getFilename() : '');
 
         $errors = $this->formatValidationErrors($this->validator->validate($post));
         if (count($errors) > 0) {
-            if (null !== $finalFile) {
+            if (null !== $file) {
                 $filesystem = new Filesystem();
-                $filesystem->remove($finalFile->getPathname());
+                $filesystem->remove($file->getPathname());
             }
 
             return new JsonResponse([
@@ -184,7 +111,8 @@ class PostController extends AbstractApiController
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $this->postRepository->save($post, true);
+        $this->entityManager->persist($post);
+        $this->entityManager->flush();
 
         $userRepository->incrementPostCount($user);
 
@@ -193,24 +121,98 @@ class PostController extends AbstractApiController
 
     #[Route('/{id}', name: 'update', requirements: ['id' => '\d+'], methods: [Request::METHOD_PUT])]
     #[IsGranted(User::ROLE_USER)]
-    public function update(Post $post): JsonResponse
+    public function update(Request $request, Post $post): JsonResponse
     {
         $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
+
+        $file = $this->handleNewPostPicture($request->files->get('picture'));
+
+        $previousFilename = $post->getPictureFilename();
+        $post->setPictureFilename(null !== $file ? $file->getFilename() : '');
+
+        $errors = $this->formatValidationErrors($this->validator->validate($post));
+        if (count($errors) > 0) {
+            if (null !== $file) {
+                $filesystem = new Filesystem();
+                $filesystem->remove($file->getPathname());
+            }
+
+            return new JsonResponse([
+                'message' => 'validation_failed',
+                'errors' => $errors
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $this->entityManager->flush();
+
+        $this->removePostFile($previousFilename);
 
         return new JsonResponse();
     }
 
     #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
     #[IsGranted(User::ROLE_USER)]
-    public function delete(Post $post): JsonResponse
+    public function delete(Post $post, UserRepository $userRepository): JsonResponse
     {
         $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
+
+        $pictureFilename = $post->getPictureFilename();
+
+        $this->entityManager->remove($post);
+        $this->entityManager->flush();
+
+        $userRepository->decrementPostCount($this->getUser());
+
+        $this->removePostFile($pictureFilename);
 
         return new JsonResponse();
     }
 
-    public function list()
+    private function handleNewPostPicture(?UploadedFile $picture): ?File
     {
+        if (null === $picture) {
+            return null;
+        }
 
+        $newFilename = sprintf(
+            '%s-%d.%s',
+            uniqid(),
+            (new \DateTime())->getTimestamp(),
+            $picture->guessExtension()
+        );
+
+        try {
+            $finalFile = $picture->move(
+                $this->postsDirectory,
+                $newFilename
+            );
+        } catch (FileException $e) {
+            // TODO: Log the error
+
+            return null;
+        }
+
+        $this->imageResizer->resizePostPicture($finalFile->getPathname());
+
+        return $finalFile;
+    }
+
+    private function removePostFile(?string $filename): void
+    {
+        if (null === $filename) {
+            return;
+        }
+
+        $filesystem = new Filesystem();
+
+        try {
+            $filesystem->remove(sprintf(
+                '%s/%s',
+                $this->postsDirectory,
+                $filename
+            ));
+        } catch (IOException $exception) {
+            // TODO: Log exception
+        }
     }
 }

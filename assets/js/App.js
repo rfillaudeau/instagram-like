@@ -8,7 +8,6 @@ import Profile from "./pages/Profile"
 import Post from "./pages/Post"
 import Settings from "./pages/Settings"
 import ProtectedRoute from "./components/ProtectedRoute"
-import PostForm from "./pages/PostForm"
 import NotFound from "./pages/NotFound"
 import Base from "./components/Base"
 
@@ -26,8 +25,6 @@ function App() {
                 <Route path="/discover" element={<Discover/>}/>
                 <Route path="/@:username" element={<Profile/>}/>
                 <Route path="/settings" element={<Settings/>}/>
-                <Route path="/posts/new" element={<PostForm/>}/>
-                <Route path="/posts/:id/edit" element={<PostForm/>}/>
                 <Route path="/posts/:id" element={<Post/>}/>
                 <Route path="/admin" element={<div>Admin</div>}/>
             </Route>

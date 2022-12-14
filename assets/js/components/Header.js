@@ -54,7 +54,7 @@ function Header() {
                                                 type="button"
                                                 className="btn btn-outline-primary w-100"
                                                 data-bs-toggle="modal"
-                                                data-bs-target="#staticBackdrop"
+                                                data-bs-target="#createPostModal"
                                             >
                                                 New post
                                             </button>

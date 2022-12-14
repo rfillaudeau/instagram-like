@@ -1,9 +1,7 @@
 import React, {useEffect, useRef, useState} from "react"
 import PostCard from "../components/PostCard"
-import PostForm from "./PostForm"
 import axios, {CanceledError} from "axios"
 import useForceUpdate from "../hooks/useForceUpdate"
-import PostFormModal from "../components/PostFormModal"
 
 function Feed() {
     const postsPerPage = 5
@@ -12,6 +10,26 @@ function Feed() {
     const [canLoadMore, setCanLoadMore] = useState(true)
     const loadMoreButtonRef = useRef(null)
     const {updateState, forceUpdate} = useForceUpdate()
+
+    useEffect(() => {
+        const listener = ({detail}) => {
+            // const { name } = detail;
+            console.log(detail)
+            console.log("event received")
+
+            setPage(1)
+            setPosts([])
+            setCanLoadMore(true)
+
+            forceUpdate()
+        }
+
+        document.addEventListener("app:post-created", listener)
+
+        return () => {
+            document.removeEventListener("app:post-created", listener)
+        }
+    }, [])
 
     useEffect(() => {
         if (loadMoreButtonRef !== null) {
@@ -83,7 +101,7 @@ function Feed() {
         loadMoreButton = (
             <button
                 type="button"
-                className="btn btn-outline-secondary w-100"
+                className="btn btn-outline-secondary w-100 my-3"
                 ref={loadMoreButtonRef}
                 onClick={loadNewPage}
             >
@@ -92,28 +110,16 @@ function Feed() {
         )
     }
 
-    function handlePostCreation() {
-        setPage(1)
-        setPosts([])
-        setCanLoadMore(true)
-
-        forceUpdate()
-    }
-
     return (
         <main className="p-2">
             <div className="container">
-
-
                 <div className="row justify-content-center">
                     <div className="col-5">
-                        {/*<PostForm onCreate={handlePostCreation} />*/}
-
                         <button
                             type="button"
-                            className="btn btn-primary w-100"
+                            className="btn btn-primary w-100 my-3"
                             data-bs-toggle="modal"
-                            data-bs-target="#staticBackdrop"
+                            data-bs-target="#createPostModal"
                         >
                             New post
                         </button>
@@ -123,8 +129,6 @@ function Feed() {
                         {loadMoreButton}
                     </div>
                 </div>
-
-                <PostFormModal/>
             </div>
         </main>
     )
