@@ -1,11 +1,12 @@
 import React, {useRef, useState} from "react"
 import useForm from "../hooks/useForm"
-import {useParams} from "react-router-dom"
 import axios from "axios"
 
-function PostFormModal({modalId}) {
+function PostFormModal({modalId, post: defaultPost}) {
+    const [post, setPost] = useState(defaultPost === undefined ? null : defaultPost)
+
     const defaultInputs = {
-        description: ""
+        description: post === null ? "" : post.description
     }
 
     const defaultFileInputs = {
@@ -15,16 +16,12 @@ function PostFormModal({modalId}) {
     const {inputs, setInputs, handleChange} = useForm(defaultInputs)
     const [fileInputs, setFileInputs] = useState(defaultFileInputs)
     const [error, setError] = useState("")
-    const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
     const cancelButtonRef = useRef(null)
-    const params = useParams()
-    const isEdit = "id" in params
+    const fileInputRef = useRef(null)
 
     function handleSubmit(event) {
         event.preventDefault()
-
-        setSuccess("")
 
         submitButtonRef.current.disabled = true
 
@@ -33,6 +30,14 @@ function PostFormModal({modalId}) {
             return
         }
 
+        if (post === null) {
+            handleCreate()
+        } else {
+            handleUpdate()
+        }
+    }
+
+    function handleCreate() {
         let formData = new FormData()
         formData.append("picture", fileInputs.picture[0])
         formData.append("description", inputs.description)
@@ -42,15 +47,48 @@ function PostFormModal({modalId}) {
                 "Content-Type": "multipart/form-data"
             }
         }).then(response => {
-            console.log(response)
+            const customEvent = new CustomEvent("app:post-created", {
+                detail: {
+                    post: response.data
+                }
+            })
+            document.dispatchEvent(customEvent)
 
             setInputs(defaultInputs)
-            setFileInputs(defaultFileInputs)
+            clearFileInput()
 
-            setSuccess("Post successfully created.")
+            cancelButtonRef.current.click()
+        }).catch(error => {
+            console.log(error)
+        }).finally(() => {
+            submitButtonRef.current.disabled = false
+        })
+    }
 
-            const customEvent = new CustomEvent("app:post-created", { detail: { name: 'primary' } })
+    function handleUpdate() {
+        let formData = new FormData()
+
+        if (fileInputs.picture.length > 0) {
+            formData.append("picture", fileInputs.picture[0])
+        }
+
+        formData.append("description", inputs.description)
+
+        axios.post(`/api/posts/${post.id}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        }).then(response => {
+            const customEvent = new CustomEvent("app:post-updated", {
+                detail: {
+                    post: response.data
+                }
+            })
             document.dispatchEvent(customEvent)
+
+            setPost(response.data)
+
+            clearFileInput()
 
             cancelButtonRef.current.click()
         }).catch(error => {
@@ -68,21 +106,23 @@ function PostFormModal({modalId}) {
             return false
         }
 
-        if (fileInputs.picture.length === 0) {
+        if (fileInputs.picture.length === 0 && post === null) {
             setError("Please select a picture")
             return false
         }
 
-        const pictureFile = fileInputs.picture[0]
+        if (fileInputs.picture.length > 0) {
+            const pictureFile = fileInputs.picture[0]
 
-        if (pictureFile.size > 2000000) {
-            setError("The file is too large. Allowed maximum size is 2 MB.")
-            return false
-        }
+            if (pictureFile.size > 2000000) {
+                setError("The file is too large. Allowed maximum size is 2 MB.")
+                return false
+            }
 
-        if (!/^image\/\w+$/g.test(pictureFile.type)) {
-            setError("The file should be an image.")
-            return false
+            if (!/^image\/\w+$/g.test(pictureFile.type)) {
+                setError("The file should be an image.")
+                return false
+            }
         }
 
         return true
@@ -97,6 +137,29 @@ function PostFormModal({modalId}) {
         }))
     }
 
+    function clearFileInput() {
+        setFileInputs(defaultFileInputs)
+        fileInputRef.current.value = ""
+    }
+
+    let picturePreview = (
+        <div className="rounded img-fluid bg-secondary square"></div>
+    )
+    if (post !== null || fileInputs.picture.length > 0) {
+        let pictureSrc = ""
+        if (fileInputs.picture.length > 0) {
+            pictureSrc = URL.createObjectURL(fileInputs.picture[0])
+        } else {
+            pictureSrc = post.pictureFilepath
+        }
+
+        picturePreview = (
+            <div>
+                <img src={pictureSrc} className="rounded img-fluid" alt="..."/>
+            </div>
+        )
+    }
+
     return (
         <div
             className="modal fade"
@@ -107,53 +170,56 @@ function PostFormModal({modalId}) {
             aria-labelledby={`${modalId}Label`}
             aria-hidden="true"
         >
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-lg">
                 <div className="modal-content">
                     <form onSubmit={handleSubmit}>
                         <div className="modal-header">
                             <h1 className="modal-title fs-5" id={`${modalId}Label`}>
-                                {isEdit ? "Edit post" : "New post"}
+                                {post === null ? "New post" : "Edit post"}
                             </h1>
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
                         <div className="modal-body">
-                            <div className="mb-3">
-                                <label htmlFor="inputPicture" className="form-label">Picture</label>
-                                <input
-                                    type="file"
-                                    className="form-control"
-                                    id="inputPicture"
-                                    name="picture"
-                                    onChange={handleFileChange}
-                                />
-                            </div>
+                            <div className="container-fluid">
+                                <div className="row">
+                                    <div className="col-5">
+                                        {picturePreview}
+                                    </div>
+                                    <div className="col-7">
+                                        <div className="mb-3">
+                                            <label htmlFor="inputPicture" className="form-label">Picture</label>
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                id="inputPicture"
+                                                name="picture"
+                                                onChange={handleFileChange}
+                                                ref={fileInputRef}
+                                            />
+                                        </div>
 
-                            <div className="mb-3">
-                                <label htmlFor="inputDescription" className="form-label">Description</label>
-                                <textarea
-                                    className="form-control"
-                                    id="inputDescription"
-                                    name="description"
-                                    cols="3"
-                                    value={inputs.description}
-                                    onChange={handleChange}
-                                />
-                            </div>
+                                        <div>
+                                            <label htmlFor="inputDescription" className="form-label">Description</label>
+                                            <textarea
+                                                className="form-control"
+                                                id="inputDescription"
+                                                name="description"
+                                                rows={7}
+                                                value={inputs.description}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
 
-                            {
-                                error.length > 0 &&
-                                <div className="alert alert-danger mb-3" role="alert">
-                                    {error}
+                                        {
+                                            error.length > 0 &&
+                                            <div className="alert alert-danger mt-3" role="alert">
+                                                {error}
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
-                            }
-
-                            {
-                                success.length > 0 &&
-                                <div className="alert alert-success mb-3" role="alert">
-                                    {success}
-                                </div>
-                            }
+                            </div>
                         </div>
 
                         <div className="modal-footer">
@@ -171,7 +237,7 @@ function PostFormModal({modalId}) {
                                 type="submit"
                                 ref={submitButtonRef}
                             >
-                                Create post
+                                {post !== null ? "Update post" : "Create post"}
                             </button>
                         </div>
                     </form>

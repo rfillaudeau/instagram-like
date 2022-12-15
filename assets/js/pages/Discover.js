@@ -1,18 +1,17 @@
-import React, {useEffect, useRef, useState} from "react"
+import React, {useEffect, useState} from "react"
 import PostPreview from "../components/PostPreview"
 import axios, {CanceledError} from "axios"
+import PostPreviewPlaceholder from "../components/PostPreviewPlaceholder"
 
 function Discover() {
     const postsPerPage = 9
-    const [posts, setPosts] = useState([])
+    const postsPlaceholder = [...Array(postsPerPage).keys()]
+    const [posts, setPosts] = useState(postsPlaceholder)
     const [page, setPage] = useState(1)
-    const [canLoadMore, setCanLoadMore] = useState(true)
-    const loadMoreButtonRef = useRef(null)
+    const [canLoadMore, setCanLoadMore] = useState(false)
 
     useEffect(() => {
-        if (loadMoreButtonRef !== null) {
-            loadMoreButtonRef.current.disabled = true
-        }
+        setCanLoadMore(false)
 
         const controller = new AbortController()
 
@@ -27,14 +26,20 @@ function Discover() {
             .then(response => {
                 const newPosts = response.data
 
-                setPosts(prevPosts => [
-                    ...prevPosts,
-                    ...newPosts
-                ])
+                setPosts(prevPosts => {
+                    let p = [
+                        ...prevPosts,
+                        ...newPosts
+                    ]
 
-                if (newPosts.length < postsPerPage) {
-                    setCanLoadMore(false)
-                }
+                    if (page === 1) {
+                        p = newPosts
+                    }
+
+                    return p
+                })
+
+                setCanLoadMore(newPosts.length >= postsPerPage)
             })
             .catch(error => {
                 if (error instanceof CanceledError) {
@@ -42,11 +47,6 @@ function Discover() {
                 }
 
                 console.error(error)
-            })
-            .finally(() => {
-                if (loadMoreButtonRef !== null) {
-                    loadMoreButtonRef.current.disabled = false
-                }
             })
 
         return () => {
@@ -63,8 +63,7 @@ function Discover() {
         loadMoreButton = (
             <button
                 type="button"
-                className="btn btn-outline-secondary w-100"
-                ref={loadMoreButtonRef}
+                className="btn btn-outline-secondary w-100 my-3"
                 onClick={loadNewPage}
             >
                 Load more
@@ -72,9 +71,9 @@ function Discover() {
         )
     }
 
-    const postElements = posts.map((post, index) => (
+    let postElements = posts.map((post, index) => (
         <div key={index} className="col-4 p-2">
-            <PostPreview post={post} />
+            {post.id === undefined ? <PostPreviewPlaceholder /> : <PostPreview post={post} />}
         </div>
     ))
 
@@ -84,7 +83,7 @@ function Discover() {
                 <div className="row justify-content-center">
                     <div className="col-8">
                         <div className="row">
-                            {postElements}
+                            {postElements.length > 0 ? postElements : <div className="text-center">No posts</div>}
 
                             {loadMoreButton}
                         </div>

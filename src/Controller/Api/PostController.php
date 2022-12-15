@@ -9,6 +9,7 @@ use App\Repository\UserRepository;
 use App\Security\PostVoter;
 use App\Service\ImageResizer;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -33,7 +34,8 @@ class PostController extends AbstractApiController
         private readonly PostRepository $postRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly ImageResizer $imageResizer,
-        private readonly string $postsDirectory
+        private readonly string $postsDirectory,
+        private readonly LoggerInterface $logger
     )
     {}
 
@@ -45,13 +47,7 @@ class PostController extends AbstractApiController
 
         $posts = $this->postRepository->findByFollowing($this->getUser(), $firstResult, $maxResults);
 
-        $jsonPosts = $this->serializer->serialize(
-            $posts,
-            JsonEncoder::FORMAT,
-            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
-        );
-
-        return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
+        return new JsonResponse($this->serializePosts($posts), Response::HTTP_OK, [], true);
     }
 
     #[Route('/discover', name: 'discover', methods: [Request::METHOD_GET])]
@@ -61,25 +57,13 @@ class PostController extends AbstractApiController
 
         $posts = $this->postRepository->findByLatest($firstResult, $maxResults);
 
-        $jsonPosts = $this->serializer->serialize(
-            $posts,
-            JsonEncoder::FORMAT,
-            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
-        );
-
-        return new JsonResponse($jsonPosts, Response::HTTP_OK, [], true);
+        return new JsonResponse($this->serializePosts($posts), Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}', name: 'read', requirements: ['id' => '\d+'], methods: [Request::METHOD_GET])]
     public function read(Post $post): JsonResponse
     {
-        $jsonPost = $this->serializer->serialize(
-            $post,
-            JsonEncoder::FORMAT,
-            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
-        );
-
-        return new JsonResponse($jsonPost, Response::HTTP_OK, [], true);
+        return new JsonResponse($this->serializePosts($post), Response::HTTP_OK, [], true);
     }
 
     #[Route('', name: 'create', methods: [Request::METHOD_POST])]
@@ -116,19 +100,29 @@ class PostController extends AbstractApiController
 
         $userRepository->incrementPostCount($user);
 
-        return new JsonResponse(null, Response::HTTP_CREATED);
+        // Refresh the user postCount
+        $this->entityManager->refresh($user);
+
+        return new JsonResponse($this->serializePosts($post), Response::HTTP_CREATED, [], true);
     }
 
-    #[Route('/{id}', name: 'update', requirements: ['id' => '\d+'], methods: [Request::METHOD_PUT])]
+    /**
+     * Using POST method instead of PUT/PATCH to be able to receive files
+     */
+    #[Route('/{id}', name: 'update', requirements: ['id' => '\d+'], methods: [Request::METHOD_POST])]
     #[IsGranted(User::ROLE_USER)]
     public function update(Request $request, Post $post): JsonResponse
     {
         $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
 
-        $file = $this->handleNewPostPicture($request->files->get('picture'));
-
         $previousFilename = $post->getPictureFilename();
-        $post->setPictureFilename(null !== $file ? $file->getFilename() : '');
+
+        $post->setDescription($request->get('description', ''));
+
+        $file = $this->handleNewPostPicture($request->files->get('picture'));
+        if (null !== $file) {
+            $post->setPictureFilename($file->getFilename());
+        }
 
         $errors = $this->formatValidationErrors($this->validator->validate($post));
         if (count($errors) > 0) {
@@ -145,9 +139,11 @@ class PostController extends AbstractApiController
 
         $this->entityManager->flush();
 
-        $this->removePostFile($previousFilename);
+        if (null !== $file) {
+            $this->removePostFile($previousFilename);
+        }
 
-        return new JsonResponse();
+        return new JsonResponse($this->serializePosts($post), Response::HTTP_OK, [], true);
     }
 
     #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
@@ -212,7 +208,18 @@ class PostController extends AbstractApiController
                 $filename
             ));
         } catch (IOException $exception) {
-            // TODO: Log exception
+            $this->logger->error($exception->getMessage(), [
+                'trace' => $exception->getTraceAsString()
+            ]);
         }
+    }
+
+    private function serializePosts(array|Post $posts): string
+    {
+        return $this->serializer->serialize(
+            $posts,
+            JsonEncoder::FORMAT,
+            [AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]]
+        );
     }
 }
