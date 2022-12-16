@@ -28,10 +28,10 @@ function PostCardPlaceholder() {
                 </div>
 
                 <p className="mb-3 text-justify">
-                    <span className="placeholder col-7"></span>
-                    <span className="placeholder col-4"></span>
-                    <span className="placeholder col-4"></span>
-                    <span className="placeholder col-6"></span>
+                    <span className="placeholder col-7 me-2"></span>
+                    <span className="placeholder col-4 me-2"></span>
+                    <span className="placeholder col-4 me-2"></span>
+                    <span className="placeholder col-6 me-2"></span>
                     <span className="placeholder col-8"></span>
                 </p>
 

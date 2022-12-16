@@ -106,7 +106,7 @@ function Post() {
     if (currentUser !== null && currentUser.id === post.user.id) {
         actionsButtons = (
             <div className="dropdown">
-                <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                <button className="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown"
                         aria-expanded="false">
                     <i className="bi bi-three-dots-vertical"></i>
                 </button>
@@ -125,71 +125,65 @@ function Post() {
     }
 
     return (
-        <main className="py-3">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-8">
-                        <div className="card mb-2">
-                            <div className="card-body">
-                                <div className="row">
-                                    <div className="col-7 pe-2">
+        <>
+            <div className="card">
+                <div className="card-body">
+                    <div className="row">
+                        <div className="col-7 pe-2">
+                            <img
+                                src={`/uploads/posts/${post.pictureFilename}`}
+                                className="rounded img-fluid"
+                                alt="..."
+                            />
+                        </div>
+                        <div className="col-5 d-flex flex-column">
+                            <div className="d-flex mb-3">
+                                <div className="align-self-center">
+                                    <Link to={`/@${post.user.username}`}>
                                         <img
-                                            src={`/uploads/posts/${post.pictureFilename}`}
-                                            className="rounded img-fluid"
-                                            alt="..."
+                                            src="/doge.jpg"
+                                            className="rounded img-fluid avatar-sm"
+                                            alt="test"
                                         />
-                                    </div>
-                                    <div className="col-5 d-flex flex-column">
-                                        <div className="d-flex mb-3">
-                                            <div className="align-self-center">
-                                                <Link to={`/@${post.user.username}`}>
-                                                    <img
-                                                        src="/doge.jpg"
-                                                        className="rounded img-fluid avatar-sm"
-                                                        alt="test"
-                                                    />
-                                                </Link>
-                                            </div>
-                                            <div className="align-self-center ps-1 fw-semibold small flex-fill mx-3">
-                                                <Link to={`/@${post.user.username}`}
-                                                      className="text-decoration-none link-dark">
-                                                    {post.user.username}
-                                                </Link>
-                                            </div>
-                                            <div>
-                                                {actionsButtons}
-                                                <FollowButton user={post.user}/>
-                                            </div>
+                                    </Link>
+                                </div>
+                                <div className="align-self-center ps-1 fw-semibold small flex-fill mx-3">
+                                    <Link to={`/@${post.user.username}`}
+                                          className="text-decoration-none link-dark">
+                                        {post.user.username}
+                                    </Link>
+                                </div>
+                                <div>
+                                    {actionsButtons}
+                                    <FollowButton user={post.user} className="btn-sm"/>
+                                </div>
 
-                                        </div>
-                                        <p className="mb-3 flex-fill">
-                                            <ShowMoreText text={post.description}/>
-                                        </p>
-                                        <div className="d-flex">
-                                            <div className="me-3">
-                                                <LikeButton
-                                                    post={post}
-                                                    onLike={() => handleLike(true)}
-                                                    onUnlike={() => handleLike(false)}
-                                                />
-                                            </div>
-                                            <div className="flex-fill align-self-center">
-                                                {abbreviateNumber(likeCount)} like{likeCount > 1 ? "s" : ""}
-                                            </div>
-                                            <div className="align-self-end">
-                                                <small className="text-muted">{createdAtDate}</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                            </div>
+                            <p className="mb-3 flex-fill">
+                                <ShowMoreText text={post.description}/>
+                            </p>
+                            <div className="d-flex">
+                                <div className="me-3">
+                                    <LikeButton
+                                        post={post}
+                                        onLike={() => handleLike(true)}
+                                        onUnlike={() => handleLike(false)}
+                                    />
+                                </div>
+                                <div className="flex-fill align-self-center">
+                                    {abbreviateNumber(likeCount)} like{likeCount > 1 ? "s" : ""}
+                                </div>
+                                <div className="align-self-end">
+                                    <small className="text-muted">{createdAtDate}</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <PostFormModal modalId="editPostModal" post={post}/>
             </div>
-        </main>
+
+            <PostFormModal modalId="editPostModal" post={post}/>
+        </>
     )
 }
 

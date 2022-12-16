@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react"
 import PostPreview from "../components/PostPreview"
 import axios, {CanceledError} from "axios"
 import PostPreviewPlaceholder from "../components/PostPreviewPlaceholder"
+import useForceUpdate from "../hooks/useForceUpdate"
 
 function Discover() {
     const postsPerPage = 9
@@ -9,6 +10,22 @@ function Discover() {
     const [posts, setPosts] = useState(postsPlaceholder)
     const [page, setPage] = useState(1)
     const [canLoadMore, setCanLoadMore] = useState(false)
+    const {updateState, forceUpdate} = useForceUpdate()
+
+    useEffect(() => {
+        const listener = () => {
+            setPage(1)
+            setPosts(postsPlaceholder)
+
+            forceUpdate()
+        }
+
+        document.addEventListener("app:post-created", listener)
+
+        return () => {
+            document.removeEventListener("app:post-created", listener)
+        }
+    }, [])
 
     useEffect(() => {
         setCanLoadMore(false)
@@ -52,7 +69,7 @@ function Discover() {
         return () => {
             controller.abort()
         }
-    }, [page])
+    }, [page, updateState])
 
     function loadNewPage() {
         setPage(prevPage => prevPage + 1)
@@ -63,7 +80,7 @@ function Discover() {
         loadMoreButton = (
             <button
                 type="button"
-                className="btn btn-outline-secondary w-100 my-3"
+                className="btn btn-outline-secondary w-100 mt-3"
                 onClick={loadNewPage}
             >
                 Load more
@@ -78,19 +95,13 @@ function Discover() {
     ))
 
     return (
-        <main className="p-2">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-8">
-                        <div className="row">
-                            {postElements.length > 0 ? postElements : <div className="text-center">No posts</div>}
-
-                            {loadMoreButton}
-                        </div>
-                    </div>
-                </div>
+        <>
+            <div className="row">
+                {postElements.length > 0 ? postElements : <div className="text-center">No posts</div>}
             </div>
-        </main>
+
+            {loadMoreButton}
+        </>
     )
 }
 

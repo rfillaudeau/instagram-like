@@ -18,24 +18,6 @@ abstract class AbstractApiController extends AbstractController
         return parent::getUser();
     }
 
-    protected function formatValidationErrors(ConstraintViolationListInterface $errors): array
-    {
-        if (count($errors) === 0) {
-            return [];
-        }
-
-        $formattedErrors = [];
-        foreach ($errors as $message) {
-            $formattedErrors[] = [
-                'property' => $message->getPropertyPath(),
-                'value' => $message->getInvalidValue(),
-                'message' => $message->getMessage(),
-            ];
-        }
-
-        return $formattedErrors;
-    }
-
     protected static function getPagination(Request $request): array
     {
         $page = $request->query->getInt('page');

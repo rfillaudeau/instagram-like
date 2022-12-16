@@ -11,7 +11,17 @@ function Base() {
     return (
         <>
             <Header/>
-            <Outlet/>
+
+            <main className="py-3">
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-8">
+                            <Outlet/>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
             <Footer/>
 
             {currentUser !== null && <PostFormModal modalId={"createPostModal"}/>}

@@ -4,6 +4,7 @@ import axios from "axios"
 import ProfilePosts from "./ProfilePosts"
 import NotFound from "../NotFound"
 import ProfileCard from "./ProfileCard"
+import ProfilePlaceholder from "./ProfilePlaceholder"
 
 function Profile() {
     const {username} = useParams()
@@ -45,24 +46,16 @@ function Profile() {
 
     if (user === null) {
         return (
-            <div>
-                Loading...
-            </div>
+            <ProfilePlaceholder/>
         )
     }
 
     return (
-        <main className="py-3">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-8">
-                        <ProfileCard user={user}/>
+        <>
+            <ProfileCard user={user}/>
 
-                        <ProfilePosts user={user}/>
-                    </div>
-                </div>
-            </div>
-        </main>
+            <ProfilePosts user={user}/>
+        </>
     )
 }
 

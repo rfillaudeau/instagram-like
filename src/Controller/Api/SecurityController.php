@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\UserDto;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,6 +15,7 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SecurityController extends AbstractApiController
@@ -24,7 +26,6 @@ class SecurityController extends AbstractApiController
     #[Route(path: '/api/login', name: 'app_login', methods: [Request::METHOD_POST])]
     public function login(NormalizerInterface $normalizer): JsonResponse
     {
-        /** @var null|User $user */
         $user = $this->getUser();
         if (null === $this->getUser()) {
             return $this->json([
@@ -46,37 +47,39 @@ class SecurityController extends AbstractApiController
         EntityManagerInterface $entityManager
     ): JsonResponse
     {
-        /** @var User $user */
-        $user = $serializer->deserialize(
+        /** @var UserDto $userDto */
+        $userDto = $serializer->deserialize(
             $request->getContent(),
-            User::class,
+            UserDto::class,
             JsonEncoder::FORMAT
         );
 
-        $errors = $this->formatValidationErrors($validator->validate(
-            $user,
+        $errors = $validator->validate(
+            $userDto,
             null,
-            [User::GROUP_DEFAULT, User::GROUP_CREATE]
-        ));
+            [UserDto::GROUP_DEFAULT, UserDto::GROUP_CREATE]
+        );
 
         if (count($errors) > 0) {
-            return new JsonResponse([
-                'message' => 'validation_failed',
-                'errors' => $errors
-            ], Response::HTTP_FORBIDDEN);
+            throw new ValidationFailedException($userDto, $errors);
         }
+
+        $user = (new User())
+            ->setEmail($userDto->email)
+            ->setUsername($userDto->username);
 
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
-            $user->getPlainPassword()
+            $userDto->plainPassword
         );
         $user->setPassword($hashedPassword);
-        $user->eraseCredentials();
 
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return new JsonResponse(null, Response::HTTP_CREATED);
+        return $this->json($user, Response::HTTP_CREATED, [], [
+            AbstractNormalizer::GROUPS => User::GROUP_READ
+        ]);
     }
 
     #[Route(path: '/sign-out', name: 'app_logout')]

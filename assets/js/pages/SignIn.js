@@ -1,15 +1,21 @@
-import React, {useRef, useState} from "react"
-import {Link} from "react-router-dom"
+import React, {useContext, useRef, useState} from "react"
+import {Link, Navigate} from "react-router-dom"
 import axios from "axios"
 import useForm from "../hooks/useForm"
+import AuthContext from "../contexts/AuthContext"
 
 function SignIn() {
+    const {currentUser} = useContext(AuthContext)
     const {inputs, handleChange} = useForm({
         email: "",
         password: ""
     })
     const [error, setError] = useState(null)
     const submitButtonRef = useRef(null)
+
+    if (currentUser !== null) {
+        return <Navigate to="/" replace/>
+    }
 
     function handleSubmit(event) {
         event.preventDefault()

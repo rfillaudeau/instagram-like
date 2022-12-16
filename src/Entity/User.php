@@ -9,7 +9,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[UniqueEntity('username')]
@@ -19,11 +18,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public const ROLE_USER = 'ROLE_USER';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
 
-    public const GROUP_DEFAULT = 'Default';
     public const GROUP_READ = 'user:read';
-    public const GROUP_CREATE = 'user:create';
-    public const GROUP_UPDATE = 'user:update';
-    public const GROUP_UPDATE_PASSWORD = 'user:update:password';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -32,16 +27,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 30, unique: true)]
-    #[Groups([self::GROUP_READ, self::GROUP_CREATE, self::GROUP_UPDATE])]
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 2, max: 30)]
+    #[Groups([self::GROUP_READ])]
     private ?string $username = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups([self::GROUP_READ, self::GROUP_CREATE, self::GROUP_UPDATE])]
-    #[Assert\NotBlank]
-    #[Assert\Email]
-    #[Assert\Length(max: 180)]
+    #[Groups([self::GROUP_READ])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -53,13 +43,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[Assert\NotBlank(groups: [self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
-    #[Assert\Length(min: 6, groups: [self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
-    #[Groups([self::GROUP_CREATE, self::GROUP_UPDATE_PASSWORD])]
-    private ?string $plainPassword = null;
-
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups([self::GROUP_READ, self::GROUP_UPDATE])]
+    #[Groups([self::GROUP_READ])]
     private ?string $bio;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -88,7 +73,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(?string $email): self
     {
         $this->email = $email;
 
@@ -184,25 +169,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getPlainPassword(): ?string
-    {
-        return $this->plainPassword;
-    }
-
-    public function setPlainPassword(?string $painPassword): self
-    {
-        $this->plainPassword = $painPassword;
-
-        return $this;
-    }
-
     /**
      * @see UserInterface
      */
     public function eraseCredentials()
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        $this->plainPassword = null;
+        // $this->plainPassword = null;
     }
 
     public function getBio(): ?string

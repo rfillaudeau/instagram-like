@@ -1,30 +1,22 @@
-import React, {useRef, useState} from "react"
-import {Link} from "react-router-dom"
+import React, {useContext, useRef, useState} from "react"
+import {Link, Navigate} from "react-router-dom"
 import axios from "axios"
+import AuthContext from "../contexts/AuthContext"
+import useForm from "../hooks/useForm"
 
 function SignUp() {
-    const [inputs, setInputs] = useState({
+    const {currentUser} = useContext(AuthContext)
+    const {inputs, handleChange} = useForm({
         username: "",
         email: "",
         password: "",
-        passwordConfirmation: "",
-        // formErrors: {
-        //     username: "",
-        //     email: "",
-        //     password: "",
-        //     passwordConfirmation: "",
-        // },
+        passwordConfirmation: ""
     })
     const [error, setError] = useState("")
     const submitButtonRef = useRef(null)
 
-    function handleChange(event) {
-        const {name, value} = event.target
-
-        setInputs(prevInputs => ({
-            ...prevInputs,
-            [name]: value
-        }))
+    if (currentUser !== null) {
+        return <Navigate to="/" replace/>
     }
 
     function handleSubmit(event) {
@@ -121,12 +113,6 @@ function SignUp() {
                                 onChange={handleChange}
                                 required={true}
                             />
-                            {/*{*/}
-                            {/*    inputs.formErrors.password.length > 0 &&*/}
-                            {/*    <div className="invalid-feedback">*/}
-                            {/*        {inputs.formErrors.password}*/}
-                            {/*    </div>*/}
-                            {/*}*/}
                         </div>
 
                         <div className="mb-3">

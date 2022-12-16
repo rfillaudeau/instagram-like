@@ -7,26 +7,26 @@ function Header() {
     const {currentUser} = useContext(AuthContext)
 
     return (
-        <header className="p-3 text-bg-dark">
-            <div className="container">
-                <div className="d-flex flex-wrap align-items-center justify-content-start">
-                    <Link to="/" className="d-flex align-items-center text-white text-decoration-none me-2">
+        <header>
+            <nav className="navbar navbar-expand navbar-dark bg-dark">
+                <div className="container">
+                    <Link to="/" className="text-white text-decoration-none me-2">
                         <i className="bi bi-moon-stars"></i>
                     </Link>
 
-                    <ul className="nav me-auto justify-content-center">
-                        <li>
+                    <ul className="navbar-nav flex-fill">
+                        <li className="nav-item">
                             <Link
                                 to="/"
-                                className={`nav-link px-2 ${pathname === "/" ? "text-white" : "text-secondary"}`}
+                                className={`nav-link ${pathname === "/" ? "text-white" : "text-secondary"}`}
                             >
                                 Home
                             </Link>
                         </li>
-                        <li>
+                        <li className="nav-item">
                             <Link
                                 to="/discover"
-                                className={`nav-link px-2 ${pathname === "/discover" ? "text-white" : "text-secondary"}`}
+                                className={`nav-link ${pathname === "/discover" ? "text-white" : "text-secondary"}`}
                             >
                                 Discover
                             </Link>
@@ -36,40 +36,48 @@ function Header() {
                     <div className="text-end justify-content-center d-flex">
                         {
                             currentUser === null ? (
-                                <ul className="nav">
+                                <ul className="navbar-nav">
                                     <li className="nav-item">
-                                        <Link to="/Sign-in" className="btn btn-outline-light">
+                                        <Link to="/Sign-in" className="btn btn-outline-light mx-2">
                                             Sign In
                                         </Link>
                                     </li>
-                                    <li className="nav-item ms-3">
-                                        <Link to="/sign-up" className="btn btn-primary">Sign Up</Link>
+                                    <li className="nav-item">
+                                        <Link to="/sign-up" className="btn btn-primary mx-2">
+                                            Sign Up
+                                        </Link>
                                     </li>
                                 </ul>
                             ) : (
                                 <>
-                                    <ul className="nav mx-3">
+                                    <ul className="navbar-nav align-items-center">
                                         <li className="nav-item">
                                             <button
                                                 type="button"
-                                                className="btn btn-outline-primary w-100"
+                                                className="btn btn-outline-primary mx-2"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#createPostModal"
                                             >
                                                 New post
                                             </button>
                                         </li>
-                                    </ul>
-
-                                    <ul className="navbar-nav">
                                         <li className="nav-item dropdown">
                                             <a
-                                                className="nav-link dropdown-toggle"
+                                                className="nav-link py-0 d-flex"
                                                 href="#"
                                                 data-bs-toggle="dropdown"
                                                 aria-expanded="false"
                                             >
-                                                {currentUser.username}
+                                                <div className="align-self-center me-2">
+                                                    <img
+                                                        src={currentUser.avatarFilepath}
+                                                        className="rounded avatar-sm"
+                                                        alt={`${currentUser.username}'s avatar`}
+                                                    />
+                                                </div>
+                                                <div className="align-self-center">
+                                                    {currentUser.username} <i className="bi bi-caret-down-fill small"></i>
+                                                </div>
                                             </a>
                                             <ul className="dropdown-menu dropdown-menu-end">
                                                 <li>
@@ -98,7 +106,7 @@ function Header() {
                         }
                     </div>
                 </div>
-            </div>
+            </nav>
         </header>
     )
 }

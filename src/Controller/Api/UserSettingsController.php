@@ -2,18 +2,16 @@
 
 namespace App\Controller\Api;
 
-use App\Dto\UserChangePasswordDto;
-use App\Dto\UserUpdateDto;
+use App\Dto\UserUpdatePasswordDto;
+use App\Dto\UserDto;
 use App\Entity\User;
-use App\Form\User\UserUpdateAvatarType;
-use App\Repository\UserRepository;
 use App\Service\ImageResizer;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +19,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[IsGranted(User::ROLE_USER)]
@@ -31,7 +31,7 @@ class UserSettingsController extends AbstractApiController
         private readonly SerializerInterface $serializer,
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserRepository $userRepository
+        private readonly LoggerInterface $logger,
     )
     {}
 
@@ -41,30 +41,19 @@ class UserSettingsController extends AbstractApiController
         UserPasswordHasherInterface $passwordHasher
     ): JsonResponse
     {
-        /** @var UserChangePasswordDto $passwordData */
+        /** @var UserUpdatePasswordDto $passwordData */
         $passwordData = $this->serializer->deserialize(
             $request->getContent(),
-            UserChangePasswordDto::class,
+            UserUpdatePasswordDto::class,
             JsonEncoder::FORMAT
         );
 
-        $errors = $this->formatValidationErrors($this->validator->validate($passwordData));
+        $errors = $this->validator->validate($passwordData);
         if (count($errors) > 0) {
-            return new JsonResponse([
-                'message' => 'validation_failed',
-                'errors' => $errors
-            ], Response::HTTP_FORBIDDEN);
+            throw new ValidationFailedException($passwordData, $errors);
         }
 
-        /** @var User $user */
         $user = $this->getUser();
-
-        if (!$passwordHasher->isPasswordValid($user, $passwordData->currentPlainPassword)) {
-            return new JsonResponse([
-                'message' => 'incorrect_password',
-                'errors' => 'The current password is not correct.'
-            ], Response::HTTP_FORBIDDEN);
-        }
 
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
@@ -80,35 +69,30 @@ class UserSettingsController extends AbstractApiController
     #[Route('/api/update-account', methods: [Request::METHOD_PATCH])]
     public function updateUser(Request $request): JsonResponse
     {
-        /** @var UserUpdateDto $userData */
-        $userData = $this->serializer->deserialize(
+        /** @var UserDto $userDto */
+        $userDto = $this->serializer->deserialize(
             $request->getContent(),
-            UserUpdateDto::class,
+            UserDto::class,
             JsonEncoder::FORMAT
         );
 
+        $errors = $this->validator->validate($userDto);
+        if (count($errors) > 0) {
+            throw new ValidationFailedException($userDto, $errors);
+        }
+
+        // Update the user after validating the data in order to avoid messing up the session data
         $user = $this->getUser();
         $user
-            ->setEmail($userData->email)
-            ->setUsername($userData->username)
-            ->setBio($userData->bio);
-
-        $errors = $this->formatValidationErrors($this->validator->validate(
-            $user,
-            null,
-            [User::GROUP_DEFAULT, User::GROUP_UPDATE]
-        ));
-
-        if (count($errors) > 0) {
-            return new JsonResponse([
-                'message' => 'validation_failed',
-                'errors' => $errors
-            ], Response::HTTP_FORBIDDEN);
-        }
+            ->setEmail($userDto->email)
+            ->setUsername($userDto->username)
+            ->setBio($userDto->bio);
 
         $this->entityManager->flush();
 
-        return new JsonResponse();
+        return $this->json($user, Response::HTTP_OK, [], [
+            AbstractNormalizer::GROUPS => User::GROUP_READ
+        ]);
     }
 
     #[Route('/api/update-avatar', methods: [Request::METHOD_POST])]
@@ -117,93 +101,59 @@ class UserSettingsController extends AbstractApiController
         ImageResizer $imageResizer
     ): JsonResponse
     {
-//        $data = json_decode($request->getContent(), true);
-        $data = [
-            'avatar' => $request->files->get('avatar'),
-        ];
-        $form = $this->createForm(UserUpdateAvatarType::class);
-        $form->submit($data);
+        $userDto = new UserDto();
+        $userDto->avatar = $request->files->get('avatar');
 
-        if ($form->isValid()) {
-            /** @var UploadedFile $avatar */
-            $avatar = $form->get('avatar')->getData();
+        $errors = $this->validator->validate($userDto, null, UserDto::GROUP_UPDATE_AVATAR);
+        if (count($errors) > 0) {
+            throw new ValidationFailedException($userDto, $errors);
+        }
 
-            $newFilename = sprintf(
-                '%s_%d.%s',
-                uniqid(),
-                (new \DateTime())->getTimestamp(),
-                $avatar->guessExtension()
+        $newFilename = sprintf(
+            '%s_%d.%s',
+            uniqid(),
+            (new DateTime())->getTimestamp(),
+            $userDto->avatar->guessExtension()
+        );
+
+        try {
+            $finalFile = $userDto->avatar->move(
+                $this->getParameter('avatars_directory'),
+                $newFilename
             );
 
-            try {
-                $finalFile = $avatar->move(
-                    $this->getParameter('avatars_directory'),
-                    $newFilename
-                );
-
-                $imageResizer->resizeUserAvatar($finalFile->getPathname());
-            } catch (FileException $e) {
-                return new JsonResponse([
-                    'message' => 'Unable to save the file',
-                    'error' => $e->getMessage(),
-                ], Response::HTTP_INTERNAL_SERVER_ERROR);
-            }
-
-            $user = $this->getUser();
-
-            $previousAvatarFilename = $user->getAvatarFilename();
-
-            $user->setAvatarFilename($newFilename);
-
-            $this->userRepository->save($user, true);
-
-            if (null !== $previousAvatarFilename) {
-                $filesystem = new Filesystem();
-
-                try {
-                    $filesystem->remove(sprintf('%s/%s',
-                        $this->getParameter('avatars_directory'),
-                        $previousAvatarFilename
-                    ));
-                } catch (IOException $exception) {
-                    // TODO: log this message
-                    dump($exception->getMessage());
-                }
-            }
-
+            $imageResizer->resizeUserAvatar($finalFile->getPathname());
+        } catch (FileException $e) {
             return new JsonResponse([
-                'avatarFilename' => $user->getAvatarFilename(),
-                'avatarFilepath' => sprintf('%s/%s',
-                    $this->getParameter('avatars_relative_directory'),
-                    $user->getAvatarFilename()
-                )
-            ]);
+                'message' => 'Unable to save the file',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        return self::getFormErrorsResponse($form);
-    }
+        $user = $this->getUser();
+        $previousAvatarFilename = $user->getAvatarFilename();
 
-    private static function getErrorsFromForm(FormInterface $form): array
-    {
-        $errors = array();
-        foreach ($form->getErrors() as $error) {
-            $errors[] = $error->getMessage();
-        }
-        foreach ($form->all() as $childForm) {
-            if ($childForm instanceof FormInterface) {
-                if ($childErrors = self::getErrorsFromForm($childForm)) {
-                    $errors[$childForm->getName()] = $childErrors;
-                }
+        $user->setAvatarFilename($newFilename);
+
+        $this->entityManager->flush();
+
+        if (null !== $previousAvatarFilename) {
+            $filesystem = new Filesystem();
+
+            try {
+                $filesystem->remove(sprintf('%s/%s',
+                    $this->getParameter('avatars_directory'),
+                    $previousAvatarFilename
+                ));
+            } catch (IOException $exception) {
+                $this->logger->error($exception->getMessage(), [
+                    'trace' => $exception->getTraceAsString()
+                ]);
             }
         }
-        return $errors;
-    }
 
-    private static function getFormErrorsResponse(FormInterface $form): JsonResponse
-    {
-        return new JsonResponse([
-            'message' => 'validation_failed',
-            'errors' => self::getErrorsFromForm($form)
-        ], Response::HTTP_FORBIDDEN);
+        return $this->json($user, Response::HTTP_OK, [], [
+            AbstractNormalizer::GROUPS => User::GROUP_READ
+        ]);
     }
 }

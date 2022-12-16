@@ -1,10 +1,12 @@
-import React, {useState} from "react"
+import React, {useContext, useState} from "react"
 import {Link} from "react-router-dom"
 import abbreviateNumber from "../../utils/abreviateNumber"
 import LikeButton from "../../components/LikeButton"
 import ShowMoreText from "../../components/ShowMoreText"
+import AuthContext from "../../contexts/AuthContext"
 
 function PostCard({post}) {
+    const {currentUser} = useContext(AuthContext)
     const [likeCount, setLikeCount] = useState(post.likeCount)
 
     const createdAtDate = (new Date(post.createdAt)).toLocaleString()
@@ -20,7 +22,7 @@ function PostCard({post}) {
     return (
         <div className="card">
             <div className="p-3 d-flex">
-                <div>
+                <div className="align-self-center">
                     <Link to={`/@${post.user.username}`} className="">
                         <img
                             src={post.user.avatarFilepath}
@@ -34,6 +36,20 @@ function PostCard({post}) {
                     <Link to={`/@${post.user.username}`} className="fw-semibold link-dark text-decoration-none">
                         {post.user.username}
                     </Link>
+                </div>
+
+                <div className="dropdown align-self-center">
+                    <button className="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i className="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul className="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <Link to={`/posts/${post.id}`} className="dropdown-item">
+                                <i className="bi bi-box-arrow-up-right"></i> Go to post
+                            </Link>
+                        </li>
+                    </ul>
                 </div>
             </div>
 

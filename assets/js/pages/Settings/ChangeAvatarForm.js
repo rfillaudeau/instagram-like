@@ -41,8 +41,15 @@ function ChangeAvatarForm() {
                 avatarFilepath: response.data.avatarFilepath
             })
         }).catch(error => {
-            console.error(error)
-            setError("Unknown Error.")
+            if (!error.response) {
+                return
+            }
+
+            if (error.response.status === 422) {
+                setError("The file is not valid.")
+            } else {
+                setError("Unknown Error.")
+            }
         }).finally(() => {
             submitButtonRef.current.disabled = false
         })
@@ -87,19 +94,19 @@ function ChangeAvatarForm() {
             <div className="mb-3 d-flex">
                 <img
                     src={currentUser.avatarFilepath}
-                    className="rounded avatar-lg align-self-lg-end me-3"
+                    className="rounded avatar-lg align-self-end me-3"
                     alt="Avatar large"
                 />
 
                 <img
                     src={currentUser.avatarFilepath}
-                    className="rounded avatar-md align-self-lg-end me-3"
+                    className="rounded avatar-md align-self-end me-3"
                     alt="Avatar medium"
                 />
 
                 <img
                     src={currentUser.avatarFilepath}
-                    className="rounded avatar-sm align-self-lg-end"
+                    className="rounded avatar-sm align-self-end"
                     alt="Avatar small"
                 />
             </div>
@@ -109,6 +116,7 @@ function ChangeAvatarForm() {
                 <input
                     type="file"
                     className="form-control"
+                    accept="image/*"
                     id="inputAvatar"
                     name="avatar"
                     onChange={handleFileChange}

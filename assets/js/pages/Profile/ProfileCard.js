@@ -36,8 +36,8 @@ function ProfileCard({user: propsUser}) {
 
                     <div className="flex-fill">
                         <div className="d-flex mb-3">
-                            <div className="flex-fill fs-2 fw-semibold">
-                                {user.username}
+                            <div className="flex-fill">
+                                <span className="fs-2 fw-semibold">{user.username}</span>
                             </div>
                             <div className="align-self-center">
                                 <FollowButton

@@ -95,26 +95,24 @@ function Feed() {
     }
 
     return (
-        <main className="p-2">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-5">
-                        <button
-                            type="button"
-                            className="btn btn-primary w-100 mb-3"
-                            data-bs-toggle="modal"
-                            data-bs-target="#createPostModal"
-                        >
-                            New post
-                        </button>
+        <div className="container">
+            <div className="row justify-content-center">
+                <div className="col-8">
+                    <button
+                        type="button"
+                        className="btn btn-primary w-100 mb-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#createPostModal"
+                    >
+                        New post
+                    </button>
 
-                        {postElements.length > 0 ? postElements : <div className="text-center mb-3">No posts</div>}
+                    {postElements.length > 0 ? postElements : <div className="text-center mb-3">No posts</div>}
 
-                        {loadMoreButton}
-                    </div>
+                    {loadMoreButton}
                 </div>
             </div>
-        </main>
+        </div>
     )
 }
 

@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\PostRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -12,7 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 class Post
 {
+    public const GROUP_DEFAULT = 'Default';
     public const GROUP_READ = 'post:read';
+    public const GROUP_CREATE = 'post:create';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -22,8 +25,11 @@ class Post
 
     #[ORM\Column(length: 255)]
     #[Groups([self::GROUP_READ])]
-    #[Assert\NotBlank]
     private ?string $pictureFilename = null;
+
+    #[Assert\NotNull(groups: [self::GROUP_CREATE])]
+    #[Assert\Image(maxSize: '2m', maxWidth: 3000, maxHeight: 3000)]
+    private ?File $picture = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups([self::GROUP_READ])]
@@ -63,6 +69,17 @@ class Post
     {
         $this->pictureFilename = $pictureFilename;
 
+        return $this;
+    }
+
+    public function getPicture(): ?File
+    {
+        return $this->picture;
+    }
+
+    public function setPicture(?File $picture): Post
+    {
+        $this->picture = $picture;
         return $this;
     }
 

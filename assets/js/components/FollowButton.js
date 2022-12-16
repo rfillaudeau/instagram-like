@@ -2,7 +2,7 @@ import React, {useContext, useRef, useState} from "react"
 import axios from "axios"
 import AuthContext from "../contexts/AuthContext"
 
-function FollowButton({user: propsUser, onFollow, onUnfollow}) {
+function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
     const {currentUser} = useContext(AuthContext)
     const [user, setUser] = useState(propsUser)
     const followButtonRef = useRef(null)
@@ -68,7 +68,7 @@ function FollowButton({user: propsUser, onFollow, onUnfollow}) {
     return (
         <button
             type="button"
-            className={`btn btn-${user.isFollowed ? "outline-secondary" : "primary"}`}
+            className={`btn btn-${user.isFollowed ? "outline-secondary" : "primary"}${className ? ` ${className}` : ""}`}
             ref={followButtonRef}
             onClick={user.isFollowed ? unfollow : follow}
         >

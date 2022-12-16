@@ -79,6 +79,8 @@ function PostFormModal({modalId, post: defaultPost}) {
                 "Content-Type": "multipart/form-data"
             }
         }).then(response => {
+            console.log(response.data)
+
             const customEvent = new CustomEvent("app:post-updated", {
                 detail: {
                     post: response.data
@@ -194,6 +196,7 @@ function PostFormModal({modalId, post: defaultPost}) {
                                                 className="form-control"
                                                 id="inputPicture"
                                                 name="picture"
+                                                accept="image/*"
                                                 onChange={handleFileChange}
                                                 ref={fileInputRef}
                                             />
