@@ -27,21 +27,26 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
     {
         $exception = $event->getThrowable();
 
-        switch(get_class($exception)) {
-            case ValidationFailedException::class:
-                $message = 'validation_failed';
-                $errors = self::formatValidationErrors($exception->getViolations());
-
-                $httpCode = Response::HTTP_UNPROCESSABLE_ENTITY;
-                break;
-
-            case NotFoundHttpException::class:
-            default:
-                $httpCode = $exception instanceof HttpException ? $exception->getStatusCode() : 500;
-                $errors = [['message' => $exception->getMessage()]];
+        if (get_class($exception) === ValidationFailedException::class) {
+            $event->setResponse(new JsonResponse([
+                'message' => 'validation_failed',
+                'errors' => self::formatValidationErrors($exception->getViolations())
+            ], Response::HTTP_UNPROCESSABLE_ENTITY));
         }
 
-        $event->setResponse(new JsonResponse(['errors' => $errors], $httpCode));
+//        switch(get_class($exception)) {
+//            case ValidationFailedException::class:
+//                $message = 'validation_failed';
+//                $errors = self::formatValidationErrors($exception->getViolations());
+//
+//                $httpCode = Response::HTTP_UNPROCESSABLE_ENTITY;
+//                break;
+//
+//            case NotFoundHttpException::class:
+//            default:
+//                $httpCode = $exception instanceof HttpException ? $exception->getStatusCode() : 500;
+//                $errors = [['message' => $exception->getMessage()]];
+//        }
     }
 
     private static function formatValidationErrors(ConstraintViolationListInterface $violations): array

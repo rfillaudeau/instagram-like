@@ -5,26 +5,22 @@ namespace App\Controller\Api;
 use App\Dto\UserDto;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SecurityController extends AbstractApiController
 {
-    /**
-     * @throws ExceptionInterface
-     */
     #[Route(path: '/api/login', name: 'app_login', methods: [Request::METHOD_POST])]
-    public function login(NormalizerInterface $normalizer): JsonResponse
+    public function login(): JsonResponse
     {
         $user = $this->getUser();
         if (null === $this->getUser()) {
@@ -33,9 +29,9 @@ class SecurityController extends AbstractApiController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->json(
-            $normalizer->normalize($user, null, [AbstractNormalizer::GROUPS => User::GROUP_READ])
-        );
+        return $this->json($user, Response::HTTP_OK, [], [
+            AbstractNormalizer::GROUPS => User::GROUP_READ
+        ]);
     }
 
     #[Route('/api/register', name: 'app_user_register', methods: [Request::METHOD_POST])]
@@ -68,6 +64,13 @@ class SecurityController extends AbstractApiController
             ->setEmail($userDto->email)
             ->setUsername($userDto->username);
 
+        // TODO: Try to move this validation in UserDto
+        // Validate the user a second time to trigger the UniqueEntity validation
+        $errors = $validator->validate($user);
+        if (count($errors) > 0) {
+            throw new ValidationFailedException($user, $errors);
+        }
+
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
             $userDto->plainPassword
@@ -85,6 +88,6 @@ class SecurityController extends AbstractApiController
     #[Route(path: '/sign-out', name: 'app_logout')]
     public function logout(): void
     {
-        throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
+        throw new LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
     }
 }

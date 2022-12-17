@@ -83,10 +83,26 @@ class UserSettingsController extends AbstractApiController
 
         // Update the user after validating the data in order to avoid messing up the session data
         $user = $this->getUser();
+
+        $previousEmail = $user->getEmail();
+        $previousUsername = $user->getUsername();
+
         $user
             ->setEmail($userDto->email)
             ->setUsername($userDto->username)
             ->setBio($userDto->bio);
+
+        // TODO: Try to move this validation in UserDto
+        // Validate the user a second time to trigger the UniqueEntity validation
+        $errors = $this->validator->validate($user);
+        if (count($errors) > 0) {
+            // Fix to avoid being logged out if the validation fails
+            $user
+                ->setEmail($previousEmail)
+                ->setUsername($previousUsername);
+
+            throw new ValidationFailedException($user, $errors);
+        }
 
         $this->entityManager->flush();
 

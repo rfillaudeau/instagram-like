@@ -8,7 +8,7 @@ parameters:
     posts_directory: '%kernel.project_dir%/public%posts_relative_directory%'
     avatars_relative_directory: '/uploads/avatars'
     avatars_directory: '%kernel.project_dir%/public%avatars_relative_directory%'
-    default_avatar_relative_path: '/doge.jpg'
+    default_avatar_relative_path: '/default_avatar.jpg'
 
 services:
     # default configuration for services in *this* file

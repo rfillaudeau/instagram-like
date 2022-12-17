@@ -45,7 +45,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups([self::GROUP_READ])]
-    private ?string $bio;
+    private ?string $bio = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups([self::GROUP_READ])]

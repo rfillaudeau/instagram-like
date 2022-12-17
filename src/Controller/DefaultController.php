@@ -2,12 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class DefaultController extends AbstractController
@@ -19,7 +19,7 @@ class DefaultController extends AbstractController
         defaults: ['reactRouting' => null],
         priority: '-1'
     )]
-    public function index(SerializerInterface $serializer, NormalizerInterface $normalizer): Response
+    public function index(SerializerInterface $serializer): Response
     {
         $user = $this->getUser();
 
@@ -28,7 +28,7 @@ class DefaultController extends AbstractController
             $userData = $serializer->serialize(
                 $user,
                 JsonEncoder::FORMAT,
-                [AbstractNormalizer::GROUPS => 'user:read']
+                [AbstractNormalizer::GROUPS => User::GROUP_READ]
             );
         }
 

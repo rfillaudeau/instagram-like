@@ -40,8 +40,15 @@ function AccountSettingsForm() {
                 bio: inputs.bio
             })
         }).catch(error => {
-            console.error(error)
-            // setError("The current password is not correct.")
+            if (!error.response) {
+                return
+            }
+
+            if (error.response.status === 422) {
+                setError("Username or email already used.")
+            } else {
+                setError("Unknown error.")
+            }
         }).finally(() => {
             submitButtonRef.current.disabled = false
         })

@@ -141,7 +141,7 @@ function Post() {
                                 <div className="align-self-center">
                                     <Link to={`/@${post.user.username}`}>
                                         <img
-                                            src="/doge.jpg"
+                                            src="/default_avatar.jpg"
                                             className="rounded img-fluid avatar-sm"
                                             alt="test"
                                         />

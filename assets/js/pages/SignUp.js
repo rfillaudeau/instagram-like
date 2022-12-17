@@ -1,5 +1,5 @@
 import React, {useContext, useRef, useState} from "react"
-import {Link, Navigate} from "react-router-dom"
+import {Link, Navigate, useNavigate} from "react-router-dom"
 import axios from "axios"
 import AuthContext from "../contexts/AuthContext"
 import useForm from "../hooks/useForm"
@@ -14,6 +14,7 @@ function SignUp() {
     })
     const [error, setError] = useState("")
     const submitButtonRef = useRef(null)
+    const navigate = useNavigate()
 
     if (currentUser !== null) {
         return <Navigate to="/" replace/>
@@ -29,18 +30,25 @@ function SignUp() {
             return
         }
 
-        console.log(inputs)
-
         axios.post("/api/register", {
             username: inputs.username,
             email: inputs.email,
             plainPassword: inputs.password
-        }).then(response => {
-            console.log(response.status)
-            console.log(response.data)
+        }).then(() => {
+            navigate("/sign-in")
+        }).catch(error => {
+            if (!error.response) {
+                return
+            }
 
+            if (error.response.status === 422) {
+                setError("Username or email already used.")
+            } else {
+                setError("Unknown error.")
+            }
+        }).finally(() => {
             submitButtonRef.current.disabled = false
-        }).catch(error => console.error(error))
+        })
     }
 
     function handleValidation() {

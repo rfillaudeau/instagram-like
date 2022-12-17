@@ -20,7 +20,10 @@ function SignIn() {
     function handleSubmit(event) {
         event.preventDefault()
 
+        submitButtonRef.current.disabled = true
+
         if (!handleValidation()) {
+            submitButtonRef.current.disabled = false
             return
         }
 
@@ -33,6 +36,8 @@ function SignIn() {
             // console.error(error)
 
             setError("Incorrect email address or password.")
+        }).finally(() => {
+            submitButtonRef.current.disabled = false
         })
     }
 
