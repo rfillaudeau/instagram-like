@@ -23,4 +23,5 @@ yarn-error.log
 
 ###> App ###
 /public/uploads/
+/docker/mysql
 ###< App ###

@@ -23,7 +23,7 @@ function PostCard({post}) {
         <div className="card">
             <div className="p-3 d-flex">
                 <div className="align-self-center">
-                    <Link to={`/@${post.user.username}`} className="">
+                    <Link to={`/${post.user.username}`} className="">
                         <img
                             src={post.user.avatarFilepath}
                             className="rounded img-fluid avatar-sm"
@@ -33,7 +33,7 @@ function PostCard({post}) {
                 </div>
 
                 <div className="align-self-center ms-3 flex-fill">
-                    <Link to={`/@${post.user.username}`} className="fw-semibold link-dark text-decoration-none">
+                    <Link to={`/${post.user.username}`} className="fw-semibold link-dark text-decoration-none">
                         {post.user.username}
                     </Link>
                 </div>
@@ -53,7 +53,7 @@ function PostCard({post}) {
                 </div>
             </div>
 
-            <img src={post.pictureFilepath} className="img-fluid" alt="..." />
+            <img src={post.pictureFilepath} className="img-fluid" alt="..."/>
 
             <div className="card-body">
                 <div className="d-flex align-items-center mb-3">

@@ -44,6 +44,8 @@ class ImageResizer
             $cropBox = new Box($width, $width);
         }
 
+        chmod($filePath, 0755);
+
         $image = $this->imagine->open($filePath);
         $image
             ->crop($cropPoint, $cropBox)

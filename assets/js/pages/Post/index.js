@@ -92,7 +92,7 @@ function Post() {
         axios
             .delete(`/api/posts/${id}`)
             .then(() => {
-                navigate(`/@${post.user.username}`)
+                navigate(`/${post.user.username}`)
             })
             .catch(error => {
                 console.error(error)
@@ -139,7 +139,7 @@ function Post() {
                         <div className="col-5 d-flex flex-column">
                             <div className="d-flex mb-3">
                                 <div className="align-self-center">
-                                    <Link to={`/@${post.user.username}`}>
+                                    <Link to={`/${post.user.username}`}>
                                         <img
                                             src="/default_avatar.jpg"
                                             className="rounded img-fluid avatar-sm"
@@ -148,7 +148,7 @@ function Post() {
                                     </Link>
                                 </div>
                                 <div className="align-self-center ps-1 fw-semibold small flex-fill mx-3">
-                                    <Link to={`/@${post.user.username}`}
+                                    <Link to={`/${post.user.username}`}
                                           className="text-decoration-none link-dark">
                                         {post.user.username}
                                     </Link>

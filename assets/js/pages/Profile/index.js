@@ -16,24 +16,21 @@ function Profile() {
 
         setIsNotFound(false)
 
-        axios
-            .get(`/api/users/${username}`, {
-                signal: controller.signal
-            })
-            .then(response => {
-                setUser(response.data)
-            })
-            .catch(error => {
-                if (!error.response) {
-                    return
-                }
+        axios.get(`/api/users/${username}`, {
+            signal: controller.signal
+        }).then(response => {
+            setUser(response.data)
+        }).catch(error => {
+            if (!error.response) {
+                return
+            }
 
-                if (error.response.status === 404) {
-                    setIsNotFound(true)
-                } else {
-                    console.error(error)
-                }
-            })
+            if (error.response.status === 404) {
+                setIsNotFound(true)
+            } else {
+                console.error(error)
+            }
+        })
 
         return () => {
             controller.abort()

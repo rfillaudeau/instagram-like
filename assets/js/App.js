@@ -21,10 +21,10 @@ function App() {
             <Route path="/" element={<Base/>}>
                 <Route index element={<ProtectedRoute><Feed/></ProtectedRoute>}/>
                 <Route path="/discover" element={<Discover/>}/>
-                <Route path="/@:username" element={<Profile/>}/>
                 <Route path="/settings" element={<ProtectedRoute><Settings/></ProtectedRoute>}/>
                 <Route path="/posts/:id" element={<Post/>}/>
                 <Route path="/admin" element={<div>Admin</div>}/>
+                <Route path="/:username" element={<Profile/>}/>
             </Route>
 
             <Route path="/sign-in" element={<SignIn/>}/>

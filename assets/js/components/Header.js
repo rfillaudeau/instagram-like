@@ -76,12 +76,13 @@ function Header() {
                                                     />
                                                 </div>
                                                 <div className="align-self-center">
-                                                    {currentUser.username} <i className="bi bi-caret-down-fill small"></i>
+                                                    {currentUser.username} <i
+                                                    className="bi bi-caret-down-fill small"></i>
                                                 </div>
                                             </a>
                                             <ul className="dropdown-menu dropdown-menu-end">
                                                 <li>
-                                                    <Link to={`/@${currentUser.username}`} className="dropdown-item">
+                                                    <Link to={`/${currentUser.username}`} className="dropdown-item">
                                                         <i className="bi bi-person-circle"></i> Profile
                                                     </Link>
                                                 </li>
@@ -91,7 +92,7 @@ function Header() {
                                                     </Link>
                                                 </li>
                                                 <li>
-                                                    <hr className="dropdown-divider" />
+                                                    <hr className="dropdown-divider"/>
                                                 </li>
                                                 <li>
                                                     <a href="/sign-out" className="dropdown-item">
