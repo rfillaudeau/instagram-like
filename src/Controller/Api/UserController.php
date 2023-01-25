@@ -31,13 +31,27 @@ class UserController extends AbstractApiController
     }
 
     /**
+     * @throws ExceptionInterface
+     */
+    #[Route('/me', name: 'get_me', methods: [Request::METHOD_GET])]
+    #[IsGranted(User::ROLE_USER)]
+    public function getMe(NormalizerInterface $normalizer): JsonResponse
+    {
+        return $this->json($normalizer->normalize(
+            $this->getUser(),
+            null,
+            [AbstractNormalizer::GROUPS => User::GROUP_READ]
+        ));
+    }
+
+    /**
      * @throws NonUniqueResultException
      */
     #[Route('/{username}/follow', name: 'follow', methods: [Request::METHOD_POST])]
     #[IsGranted(User::ROLE_USER)]
     public function follow(
-        User $user,
-        FollowRepository $followRepository,
+        User                   $user,
+        FollowRepository       $followRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse
     {
@@ -76,8 +90,8 @@ class UserController extends AbstractApiController
     #[Route('/{username}/follow', name: 'unfollow', methods: [Request::METHOD_DELETE])]
     #[IsGranted(User::ROLE_USER)]
     public function unfollow(
-        User $user,
-        FollowRepository $followRepository,
+        User                   $user,
+        FollowRepository       $followRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse
     {
@@ -108,9 +122,9 @@ class UserController extends AbstractApiController
 
     #[Route('/{username}/posts', name: 'posts', methods: [Request::METHOD_GET])]
     public function getPosts(
-        Request $request,
-        User $user,
-        PostRepository $postRepository,
+        Request             $request,
+        User                $user,
+        PostRepository      $postRepository,
         SerializerInterface $serializer
     ): JsonResponse
     {

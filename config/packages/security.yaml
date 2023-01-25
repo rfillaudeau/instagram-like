@@ -9,6 +9,7 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -16,14 +17,18 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            logout:
-                path: app_logout
-                # where to redirect after logout
-                target: app_index
-            json_login:
-                check_path: app_login
-                username_path: email
-                password_path: password
+            stateless: true
+            #            logout:
+            #                path: app_logout
+            #                # where to redirect after logout
+            #                target: app_index
+            #            json_login:
+            #                check_path: app_login
+            #                username_path: email
+            #                password_path: password
+            access_token:
+                token_handler: App\Security\AccessTokenHandler
+                token_extractors: header
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -34,8 +39,8 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+    # - { path: ^/admin, roles: ROLE_ADMIN }
+    # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:
     security:

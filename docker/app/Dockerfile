@@ -27,10 +27,10 @@ RUN groupmod -g 1000 www-data
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV PATH="${PATH}:/root/.composer/vendor/bin"
 
-RUN composer install
-RUN composer clear-cache
-
-RUN npm install
+#RUN composer install
+#RUN composer clear-cache
+#
+#RUN npm install
 #RUN npm run build
 
 CMD ["php-fpm"]

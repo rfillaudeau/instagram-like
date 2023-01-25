@@ -2,13 +2,18 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\LoginDto;
 use App\Dto\UserDto;
+use App\Entity\AccessToken;
 use App\Entity\User;
+use App\Repository\AccessTokenRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use LogicException;
+use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -19,28 +24,49 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SecurityController extends AbstractApiController
 {
-    #[Route(path: '/api/login', name: 'app_login', methods: [Request::METHOD_POST])]
-    public function login(): JsonResponse
+    /**
+     * @throws NonUniqueResultException
+     */
+    #[Route(path: '/api/auth/token', name: 'app_login', methods: [Request::METHOD_POST])]
+    public function login(
+        Request                     $request,
+        SerializerInterface         $serializer,
+        UserPasswordHasherInterface $passwordHasher,
+        UserRepository              $userRepository,
+        EntityManagerInterface      $entityManager
+    ): JsonResponse
     {
-        $user = $this->getUser();
-        if (null === $this->getUser()) {
+        /** @var LoginDto $loginDto */
+        $loginDto = $serializer->deserialize(
+            $request->getContent(),
+            LoginDto::class,
+            JsonEncoder::FORMAT
+        );
+
+        $user = $userRepository->findOneByEmail($loginDto->email);
+        if (null === $user || !$passwordHasher->isPasswordValid($user, $loginDto->password)) {
             return $this->json([
                 'error' => 'Invalid credentials'
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->json($user, Response::HTTP_OK, [], [
-            AbstractNormalizer::GROUPS => User::GROUP_READ
+        $accessToken = new AccessToken($user);
+
+        $entityManager->persist($accessToken);
+        $entityManager->flush();
+
+        return $this->json($accessToken, Response::HTTP_OK, [], [
+            AbstractNormalizer::GROUPS => AccessToken::GROUP_READ
         ]);
     }
 
     #[Route('/api/register', name: 'app_user_register', methods: [Request::METHOD_POST])]
     public function register(
-        Request $request,
-        ValidatorInterface $validator,
-        SerializerInterface $serializer,
+        Request                     $request,
+        ValidatorInterface          $validator,
+        SerializerInterface         $serializer,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface      $entityManager
     ): JsonResponse
     {
         /** @var UserDto $userDto */
@@ -85,9 +111,31 @@ class SecurityController extends AbstractApiController
         ]);
     }
 
-    #[Route(path: '/sign-out', name: 'app_logout')]
-    public function logout(): void
+    /**
+     * @throws NonUniqueResultException
+     */
+    #[Route(path: '/api/auth/revoke', name: 'app_logout')]
+    public function logout(
+        Request                $request,
+        AccessTokenRepository  $accessTokenRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
     {
-        throw new LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
+        $authorization = $request->headers->get('authorization');
+        if (null === $authorization) {
+            throw new AccessDeniedHttpException('Authorization not found.');
+        }
+
+        $accessToken = $accessTokenRepository->findOneByToken(
+            str_replace('Bearer ', '', $authorization)
+        );
+        if (null === $accessToken) {
+            throw new AccessDeniedHttpException('Access Token not found.');
+        }
+
+        $entityManager->remove($accessToken);
+        $entityManager->flush();
+
+        return new JsonResponse();
     }
 }

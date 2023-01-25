@@ -19,10 +19,11 @@ class LikeController extends AbstractApiController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly LikeRepository $likeRepository,
-        private readonly PostRepository $postRepository,
+        private readonly LikeRepository         $likeRepository,
+        private readonly PostRepository         $postRepository,
     )
-    {}
+    {
+    }
 
     /**
      * @throws NonUniqueResultException
@@ -38,8 +39,7 @@ class LikeController extends AbstractApiController
     {
         $user = $this->getUser();
 
-        $like = $this->likeRepository->findOneByUserAndPost($user, $post);
-        if (null !== $like) {
+        if (null !== $this->likeRepository->findOneByUserAndPost($user, $post)) {
             return new JsonResponse(null, Response::HTTP_OK);
         }
 
@@ -67,9 +67,7 @@ class LikeController extends AbstractApiController
     #[IsGranted(User::ROLE_USER)]
     public function unlike(Post $post): JsonResponse
     {
-        $user = $this->getUser();
-
-        $like = $this->likeRepository->findOneByUserAndPost($user, $post);
+        $like = $this->likeRepository->findOneByUserAndPost($this->getUser(), $post);
         if (null === $like) {
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         }
