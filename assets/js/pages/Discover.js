@@ -34,11 +34,14 @@ function Discover() {
 
         const controller = new AbortController()
 
-        api.get("/posts/discover", {
+        api.get("/posts", {
             signal: controller.signal,
             params: {
                 page: page,
-                itemsPerPage: postsPerPage
+                itemsPerPage: postsPerPage,
+                order: {
+                    createdAt: "desc"
+                },
             }
         }).then(response => {
             const newPosts = response.data

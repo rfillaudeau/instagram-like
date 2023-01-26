@@ -2,14 +2,44 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Filter\OnlyPostsFromFollowingFilter;
 use App\Repository\PostRepository;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            paginationClientItemsPerPage: true,
+        ),
+        new Get(),
+    ],
+    normalizationContext: [
+        AbstractNormalizer::GROUPS => [
+            Post::GROUP_READ,
+            User::GROUP_READ,
+        ]
+    ],
+)]
+#[ApiFilter(
+    OrderFilter::class,
+    properties: [
+        'createdAt' => Criteria::DESC,
+    ],
+    arguments: ['orderParameterName' => 'order']
+)]
+#[ApiFilter(OnlyPostsFromFollowingFilter::class)]
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 class Post
 {

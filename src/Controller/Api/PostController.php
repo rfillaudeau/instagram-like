@@ -4,7 +4,6 @@ namespace App\Controller\Api;
 
 use App\Entity\Post;
 use App\Entity\User;
-use App\Repository\PostRepository;
 use App\Repository\UserRepository;
 use App\Security\PostVoter;
 use App\Service\ImageResizer;
@@ -25,50 +24,17 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/posts', name: 'api_post_')]
+#[Route('/api/old-posts', name: 'api_post_')]
 class PostController extends AbstractApiController
 {
     public function __construct(
-        private readonly ValidatorInterface $validator,
-        private readonly PostRepository $postRepository,
+        private readonly ValidatorInterface     $validator,
         private readonly EntityManagerInterface $entityManager,
-        private readonly ImageResizer $imageResizer,
-        private readonly string $postsDirectory,
-        private readonly LoggerInterface $logger
+        private readonly ImageResizer           $imageResizer,
+        private readonly string                 $postsDirectory,
+        private readonly LoggerInterface        $logger
     )
-    {}
-
-    #[Route('/feed', name: 'feed', methods: [Request::METHOD_GET])]
-    #[IsGranted(User::ROLE_USER)]
-    public function feed(Request $request): JsonResponse
     {
-        list($firstResult, $maxResults) = self::getPagination($request);
-
-        $posts = $this->postRepository->findByFollowing($this->getUser(), $firstResult, $maxResults);
-
-        return $this->json($posts, Response::HTTP_OK, [], [
-            AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
-        ]);
-    }
-
-    #[Route('/discover', name: 'discover', methods: [Request::METHOD_GET])]
-    public function discover(Request $request): JsonResponse
-    {
-        list($firstResult, $maxResults) = self::getPagination($request);
-
-        $posts = $this->postRepository->findByLatest($firstResult, $maxResults);
-
-        return $this->json($posts, Response::HTTP_OK, [], [
-            AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
-        ]);
-    }
-
-    #[Route('/{id}', name: 'read', requirements: ['id' => '\d+'], methods: [Request::METHOD_GET])]
-    public function read(Post $post): JsonResponse
-    {
-        return $this->json($post, Response::HTTP_OK, [], [
-            AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
-        ]);
     }
 
     #[Route('', name: 'create', methods: [Request::METHOD_POST])]
@@ -112,6 +78,33 @@ class PostController extends AbstractApiController
         return $this->json($post, Response::HTTP_CREATED, [], [
             AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
         ]);
+    }
+
+    private function handleNewPostPicture(File $picture): ?File
+    {
+        $newFilename = sprintf(
+            '%s-%d.%s',
+            uniqid(),
+            (new DateTime())->getTimestamp(),
+            $picture->guessExtension()
+        );
+
+        try {
+            $finalFile = $picture->move(
+                $this->postsDirectory,
+                $newFilename
+            );
+        } catch (FileException $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'trace' => $exception->getTraceAsString()
+            ]);
+
+            return null;
+        }
+
+        $this->imageResizer->resizePostPicture($finalFile->getPathname());
+
+        return $finalFile;
     }
 
     /**
@@ -159,51 +152,6 @@ class PostController extends AbstractApiController
         ]);
     }
 
-    #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
-    #[IsGranted(User::ROLE_USER)]
-    public function delete(Post $post, UserRepository $userRepository): JsonResponse
-    {
-        $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
-
-        $pictureFilename = $post->getPictureFilename();
-
-        $this->entityManager->remove($post);
-        $this->entityManager->flush();
-
-        $userRepository->decrementPostCount($this->getUser());
-
-        $this->removePostFile($pictureFilename);
-
-        return new JsonResponse();
-    }
-
-    private function handleNewPostPicture(File $picture): ?File
-    {
-        $newFilename = sprintf(
-            '%s-%d.%s',
-            uniqid(),
-            (new DateTime())->getTimestamp(),
-            $picture->guessExtension()
-        );
-
-        try {
-            $finalFile = $picture->move(
-                $this->postsDirectory,
-                $newFilename
-            );
-        } catch (FileException $exception) {
-            $this->logger->error($exception->getMessage(), [
-                'trace' => $exception->getTraceAsString()
-            ]);
-
-            return null;
-        }
-
-        $this->imageResizer->resizePostPicture($finalFile->getPathname());
-
-        return $finalFile;
-    }
-
     private function removePostFile(?string $filename): void
     {
         if (null === $filename) {
@@ -223,5 +171,23 @@ class PostController extends AbstractApiController
                 'trace' => $exception->getTraceAsString()
             ]);
         }
+    }
+
+    #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: [Request::METHOD_DELETE])]
+    #[IsGranted(User::ROLE_USER)]
+    public function delete(Post $post, UserRepository $userRepository): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(PostVoter::UPDATE, $post);
+
+        $pictureFilename = $post->getPictureFilename();
+
+        $this->entityManager->remove($post);
+        $this->entityManager->flush();
+
+        $userRepository->decrementPostCount($this->getUser());
+
+        $this->removePostFile($pictureFilename);
+
+        return new JsonResponse();
     }
 }

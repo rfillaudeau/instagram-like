@@ -12,12 +12,16 @@ export function AuthContextProvider(props) {
 
     let apiConfig = {
         baseURL: "/api",
+        headers: {
+            Accept: "application/json",
+        }
     }
 
     if (accessToken !== null) {
         apiConfig = {
             ...apiConfig,
             headers: {
+                ...apiConfig.headers,
                 Authorization: `Bearer ${accessToken}`
             }
         }

@@ -34,11 +34,15 @@ function Feed() {
 
         setCanLoadMore(false)
 
-        api.get("/posts/feed", {
+        api.get("/posts", {
             signal: controller.signal,
             params: {
                 page: page,
-                itemsPerPage: postsPerPage
+                itemsPerPage: postsPerPage,
+                order: {
+                    createdAt: "desc"
+                },
+                onlyPostsFromFollowing: true
             }
         }).then(response => {
             const newPosts = response.data
