@@ -1,11 +1,10 @@
-import React, {useContext, useRef, useState} from "react"
+import React, {useRef, useState} from "react"
 import {Link, Navigate} from "react-router-dom"
-import axios from "axios"
 import useForm from "../hooks/useForm"
-import AuthContext from "../contexts/AuthContext"
+import {useAuth} from "../contexts/AuthContext"
 
 function SignIn() {
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser, api, updateAccessTokenData} = useAuth()
     const {inputs, handleChange} = useForm({
         email: "",
         password: ""
@@ -27,13 +26,13 @@ function SignIn() {
             return
         }
 
-        axios.post("/api/login", {
+        api.post("/auth/token", {
             email: inputs.email,
             password: inputs.password
-        }).then(() => {
-            location.href = "/"
+        }).then(response => {
+            updateAccessTokenData(response.data)
         }).catch(error => {
-            // console.error(error)
+            console.error(error)
 
             setError("Incorrect email address or password.")
         }).finally(() => {

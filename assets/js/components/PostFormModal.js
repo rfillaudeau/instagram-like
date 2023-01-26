@@ -1,8 +1,9 @@
 import React, {useRef, useState} from "react"
 import useForm from "../hooks/useForm"
-import axios from "axios"
+import {useAuth} from "../contexts/AuthContext"
 
 function PostFormModal({modalId, post: defaultPost}) {
+    const {api} = useAuth()
     const [post, setPost] = useState(defaultPost === undefined ? null : defaultPost)
 
     const defaultInputs = {
@@ -42,7 +43,7 @@ function PostFormModal({modalId, post: defaultPost}) {
         formData.append("picture", fileInputs.picture[0])
         formData.append("description", inputs.description)
 
-        axios.post("/api/posts", formData, {
+        api.post("/posts", formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
@@ -74,7 +75,7 @@ function PostFormModal({modalId, post: defaultPost}) {
 
         formData.append("description", inputs.description)
 
-        axios.post(`/api/posts/${post.id}`, formData, {
+        api.post(`/posts/${post.id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
@@ -116,8 +117,8 @@ function PostFormModal({modalId, post: defaultPost}) {
         if (fileInputs.picture.length > 0) {
             const pictureFile = fileInputs.picture[0]
 
-            if (pictureFile.size > 2000000) {
-                setError("The file is too large. Allowed maximum size is 2 MB.")
+            if (pictureFile.size > 3000000) {
+                setError("The file is too large. Allowed maximum size is 3 MB.")
                 return false
             }
 
@@ -179,7 +180,8 @@ function PostFormModal({modalId, post: defaultPost}) {
                             <h1 className="modal-title fs-5" id={`${modalId}Label`}>
                                 {post === null ? "New post" : "Edit post"}
                             </h1>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                         </div>
 
                         <div className="modal-body">

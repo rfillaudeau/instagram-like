@@ -1,10 +1,18 @@
-import React, {useContext} from "react"
+import React from "react"
 import {Link, useLocation} from "react-router-dom"
-import AuthContext from "../contexts/AuthContext"
+import {useAuth} from "../contexts/AuthContext"
 
 function Header() {
     const {pathname} = useLocation()
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser, api, clearSession} = useAuth()
+
+    function signOut(event) {
+        event.preventDefault()
+
+        api.post("/auth/revoke")
+
+        clearSession()
+    }
 
     return (
         <header>
@@ -95,7 +103,7 @@ function Header() {
                                                     <hr className="dropdown-divider"/>
                                                 </li>
                                                 <li>
-                                                    <a href="/sign-out" className="dropdown-item">
+                                                    <a href="#" className="dropdown-item" onClick={signOut}>
                                                         <i className="bi bi-power"></i> Sign Out
                                                     </a>
                                                 </li>

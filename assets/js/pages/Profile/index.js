@@ -1,12 +1,13 @@
 import React, {useEffect, useState} from "react"
 import {useParams} from "react-router-dom"
-import axios from "axios"
 import ProfilePosts from "./ProfilePosts"
 import NotFound from "../NotFound"
 import ProfileCard from "./ProfileCard"
 import ProfilePlaceholder from "./ProfilePlaceholder"
+import {useAuth} from "../../contexts/AuthContext"
 
 function Profile() {
+    const {api} = useAuth()
     const {username} = useParams()
     const [user, setUser] = useState(null)
     const [isNotFound, setIsNotFound] = useState(false)
@@ -16,7 +17,7 @@ function Profile() {
 
         setIsNotFound(false)
 
-        axios.get(`/api/users/${username}`, {
+        api.get(`/users/${username}`, {
             signal: controller.signal
         }).then(response => {
             setUser(response.data)

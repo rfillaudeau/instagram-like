@@ -1,10 +1,12 @@
 import React, {useEffect, useState} from "react"
 import PostPreview from "../components/PostPreview"
-import axios, {CanceledError} from "axios"
+import {CanceledError} from "axios"
 import PostPreviewPlaceholder from "../components/PostPreviewPlaceholder"
 import useForceUpdate from "../hooks/useForceUpdate"
+import {useAuth} from "../contexts/AuthContext"
 
 function Discover() {
+    const {api} = useAuth()
     const postsPerPage = 9
     const postsPlaceholder = [...Array(postsPerPage).keys()]
     const [posts, setPosts] = useState(postsPlaceholder)
@@ -32,39 +34,36 @@ function Discover() {
 
         const controller = new AbortController()
 
-        axios
-            .get("/api/posts/discover", {
-                signal: controller.signal,
-                params: {
-                    page: page,
-                    itemsPerPage: postsPerPage
-                }
-            })
-            .then(response => {
-                const newPosts = response.data
+        api.get("/posts/discover", {
+            signal: controller.signal,
+            params: {
+                page: page,
+                itemsPerPage: postsPerPage
+            }
+        }).then(response => {
+            const newPosts = response.data
 
-                setPosts(prevPosts => {
-                    let p = [
-                        ...prevPosts,
-                        ...newPosts
-                    ]
+            setPosts(prevPosts => {
+                let p = [
+                    ...prevPosts,
+                    ...newPosts
+                ]
 
-                    if (page === 1) {
-                        p = newPosts
-                    }
-
-                    return p
-                })
-
-                setCanLoadMore(newPosts.length >= postsPerPage)
-            })
-            .catch(error => {
-                if (error instanceof CanceledError) {
-                    return
+                if (page === 1) {
+                    p = newPosts
                 }
 
-                console.error(error)
+                return p
             })
+
+            setCanLoadMore(newPosts.length >= postsPerPage)
+        }).catch(error => {
+            if (error instanceof CanceledError) {
+                return
+            }
+
+            console.error(error)
+        })
 
         return () => {
             controller.abort()
@@ -90,7 +89,7 @@ function Discover() {
 
     let postElements = posts.map((post, index) => (
         <div key={index} className="col-4 p-2">
-            {post.id === undefined ? <PostPreviewPlaceholder /> : <PostPreview post={post} />}
+            {post.id === undefined ? <PostPreviewPlaceholder/> : <PostPreview post={post}/>}
         </div>
     ))
 

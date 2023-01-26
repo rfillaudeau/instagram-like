@@ -1,12 +1,12 @@
-import React, {useContext} from "react"
+import React from "react"
 import Header from "./Header"
 import Footer from "./Footer"
 import {Outlet} from "react-router-dom"
 import PostFormModal from "./PostFormModal"
-import AuthContext from "../contexts/AuthContext"
+import {useAuth} from "../contexts/AuthContext"
 
 function Base() {
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser} = useAuth()
 
     return (
         <>

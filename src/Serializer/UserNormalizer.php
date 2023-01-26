@@ -7,23 +7,20 @@ use App\Repository\FollowRepository;
 use ArrayObject;
 use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class UserNormalizer implements NormalizerInterface
+final readonly class UserNormalizer implements NormalizerInterface
 {
     public function __construct(
-        // Known issue workaround (https://github.com/symfony/maker-bundle/issues/1252)
-        #[Autowire(service: ObjectNormalizer::class)]
-        private readonly NormalizerInterface $normalizer,
-        private readonly Security $security,
-        private readonly FollowRepository $followRepository,
-        private readonly string $defaultAvatarRelativePath,
-        private readonly string $avatarsRelativeDirectory
+        private NormalizerInterface $normalizer,
+        private Security            $security,
+        private FollowRepository    $followRepository,
+        private string              $defaultAvatarRelativePath,
+        private string              $avatarsRelativeDirectory
     )
-    {}
+    {
+    }
 
     /**
      * @param User $object

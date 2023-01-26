@@ -1,5 +1,5 @@
 import React, {useRef, useState} from "react"
-import axios from "axios"
+import {useAuth} from "../../contexts/AuthContext"
 
 function ChangePasswordForm() {
     const defaultInputs = {
@@ -11,6 +11,7 @@ function ChangePasswordForm() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
+    const {api} = useAuth()
 
     function handleChange(event) {
         const {name, value} = event.target
@@ -33,7 +34,7 @@ function ChangePasswordForm() {
             return
         }
 
-        axios.patch("/api/update-password", {
+        api.patch("/update-password", {
             currentPlainPassword: inputs.currentPassword,
             newPlainPassword: inputs.newPassword
         }).then(() => {

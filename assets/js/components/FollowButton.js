@@ -1,9 +1,8 @@
-import React, {useContext, useRef, useState} from "react"
-import axios from "axios"
-import AuthContext from "../contexts/AuthContext"
+import React, {useRef, useState} from "react"
+import {useAuth} from "../contexts/AuthContext"
 
 function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser, api} = useAuth()
     const [user, setUser] = useState(propsUser)
     const followButtonRef = useRef(null)
 
@@ -12,26 +11,22 @@ function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
             followButtonRef.current.disabled = true
         }
 
-        axios
-            .post(`/api/users/${user.username}/follow`)
-            .then(() => {
-                setUser(prevUser => ({
-                    ...prevUser,
-                    isFollowed: true
-                }))
+        api.post(`/users/${user.username}/follow`).then(() => {
+            setUser(prevUser => ({
+                ...prevUser,
+                isFollowed: true
+            }))
 
-                if (onFollow instanceof Function) {
-                    onFollow()
-                }
-            })
-            .catch(error => {
-                console.error(error)
-            })
-            .finally(() => {
-                if (followButtonRef !== null) {
-                    followButtonRef.current.disabled = false
-                }
-            })
+            if (onFollow instanceof Function) {
+                onFollow()
+            }
+        }).catch(error => {
+            console.error(error)
+        }).finally(() => {
+            if (followButtonRef !== null) {
+                followButtonRef.current.disabled = false
+            }
+        })
     }
 
     function unfollow() {
@@ -39,26 +34,22 @@ function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
             followButtonRef.current.disabled = true
         }
 
-        axios
-            .delete(`/api/users/${user.username}/follow`)
-            .then(() => {
-                setUser(prevUser => ({
-                    ...prevUser,
-                    isFollowed: false
-                }))
+        api.delete(`/users/${user.username}/follow`).then(() => {
+            setUser(prevUser => ({
+                ...prevUser,
+                isFollowed: false
+            }))
 
-                if (onUnfollow instanceof Function) {
-                    onUnfollow()
-                }
-            })
-            .catch(error => {
-                console.error(error)
-            })
-            .finally(() => {
-                if (followButtonRef !== null) {
-                    followButtonRef.current.disabled = false
-                }
-            })
+            if (onUnfollow instanceof Function) {
+                onUnfollow()
+            }
+        }).catch(error => {
+            console.error(error)
+        }).finally(() => {
+            if (followButtonRef !== null) {
+                followButtonRef.current.disabled = false
+            }
+        })
     }
 
     if (currentUser === null || currentUser.id === user.id) {

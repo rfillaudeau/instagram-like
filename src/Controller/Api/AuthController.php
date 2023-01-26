@@ -22,13 +22,14 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class SecurityController extends AbstractApiController
+#[Route(path: '/api/auth')]
+class AuthController extends AbstractApiController
 {
     /**
      * @throws NonUniqueResultException
      */
-    #[Route(path: '/api/auth/token', name: 'app_login', methods: [Request::METHOD_POST])]
-    public function login(
+    #[Route(path: '/token', name: 'app_login', methods: [Request::METHOD_POST])]
+    public function token(
         Request                     $request,
         SerializerInterface         $serializer,
         UserPasswordHasherInterface $passwordHasher,
@@ -60,7 +61,35 @@ class SecurityController extends AbstractApiController
         ]);
     }
 
-    #[Route('/api/register', name: 'app_user_register', methods: [Request::METHOD_POST])]
+    /**
+     * @throws NonUniqueResultException
+     */
+    #[Route(path: '/revoke', name: 'app_logout', methods: [Request::METHOD_POST])]
+    public function revoke(
+        Request                $request,
+        AccessTokenRepository  $accessTokenRepository,
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        $authorization = $request->headers->get('authorization');
+        if (null === $authorization) {
+            throw new AccessDeniedHttpException('Authorization not found.');
+        }
+
+        $accessToken = $accessTokenRepository->findOneByToken(
+            str_replace('Bearer ', '', $authorization)
+        );
+        if (null === $accessToken) {
+            throw new AccessDeniedHttpException('Access Token not found.');
+        }
+
+        $entityManager->remove($accessToken);
+        $entityManager->flush();
+
+        return new JsonResponse();
+    }
+
+    #[Route('/register', name: 'app_user_register', methods: [Request::METHOD_POST])]
     public function register(
         Request                     $request,
         ValidatorInterface          $validator,
@@ -109,33 +138,5 @@ class SecurityController extends AbstractApiController
         return $this->json($user, Response::HTTP_CREATED, [], [
             AbstractNormalizer::GROUPS => User::GROUP_READ
         ]);
-    }
-
-    /**
-     * @throws NonUniqueResultException
-     */
-    #[Route(path: '/api/auth/revoke', name: 'app_logout')]
-    public function logout(
-        Request                $request,
-        AccessTokenRepository  $accessTokenRepository,
-        EntityManagerInterface $entityManager
-    ): JsonResponse
-    {
-        $authorization = $request->headers->get('authorization');
-        if (null === $authorization) {
-            throw new AccessDeniedHttpException('Authorization not found.');
-        }
-
-        $accessToken = $accessTokenRepository->findOneByToken(
-            str_replace('Bearer ', '', $authorization)
-        );
-        if (null === $accessToken) {
-            throw new AccessDeniedHttpException('Access Token not found.');
-        }
-
-        $entityManager->remove($accessToken);
-        $entityManager->flush();
-
-        return new JsonResponse();
     }
 }

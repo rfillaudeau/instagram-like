@@ -1,7 +1,8 @@
 import React, {useRef, useState} from "react"
-import axios from "axios"
+import {useAuth} from "../contexts/AuthContext"
 
 function LikeButton({post, onLike, onUnlike}) {
+    const {api} = useAuth()
     const [isLiked, setIsLiked] = useState(post.isLiked)
     const likeButtonRef = useRef(null)
 
@@ -9,39 +10,31 @@ function LikeButton({post, onLike, onUnlike}) {
         likeButtonRef.current.disabled = true
 
         if (isLiked) {
-            axios
-                .delete(`/api/posts/${post.id}/like`)
-                .then(() => {
+            api.delete(`/posts/${post.id}/like`).then(() => {
+                setIsLiked(prevIsLiked => !prevIsLiked)
+
+                if (onUnlike instanceof Function) {
+                    onUnlike()
+                }
+            }).catch(error => {
+                console.error(error)
+            }).finally(() => {
+                likeButtonRef.current.disabled = false
+            })
+        } else {
+            api.post(`/posts/${post.id}/like`).then(response => {
+                if (response.status === 201) {
                     setIsLiked(prevIsLiked => !prevIsLiked)
 
-                    if (onUnlike instanceof Function) {
-                        onUnlike()
+                    if (onLike instanceof Function) {
+                        onLike()
                     }
-                })
-                .catch(error => {
-                    console.error(error)
-                })
-                .finally(() => {
-                    likeButtonRef.current.disabled = false
-                })
-        } else {
-            axios
-                .post(`/api/posts/${post.id}/like`)
-                .then(response => {
-                    if (response.status === 201) {
-                        setIsLiked(prevIsLiked => !prevIsLiked)
-
-                        if (onLike instanceof Function) {
-                            onLike()
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error(error)
-                })
-                .finally(() => {
-                    likeButtonRef.current.disabled = false
-                })
+                }
+            }).catch(error => {
+                console.error(error)
+            }).finally(() => {
+                likeButtonRef.current.disabled = false
+            })
         }
     }
 

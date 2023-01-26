@@ -1,9 +1,8 @@
-import React, {useContext, useRef, useState} from "react"
-import AuthContext from "../../contexts/AuthContext"
-import axios from "axios"
+import React, {useRef, useState} from "react"
+import {useAuth} from "../../contexts/AuthContext"
 
 function ChangeAvatarForm() {
-    const {currentUser, updateUser} = useContext(AuthContext)
+    const {currentUser, updateUser, api} = useAuth()
     const [fileInputs, setFileInputs] = useState({
         avatar: []
     })
@@ -27,14 +26,17 @@ function ChangeAvatarForm() {
         let formData = new FormData()
         formData.append("avatar", fileInputs.avatar[0])
 
-        axios.post("/api/update-avatar", formData, {
+        api.post("/update-avatar", formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
         }).then(response => {
-            setSuccess("Avatar successfully updated")
+            if (response.data.avatarFilename == null || response.data.avatarFilepath == null) {
+                setError("Unknown Error.")
+                return
+            }
 
-            console.log(response.data)
+            setSuccess("Avatar successfully updated")
 
             updateUser({
                 avatarFilename: response.data.avatarFilename,
@@ -74,8 +76,8 @@ function ChangeAvatarForm() {
 
         const avatarFile = fileInputs.avatar[0]
 
-        if (avatarFile.size > 2000000) {
-            setError("The file is too large. Allowed maximum size is 2 MB.")
+        if (avatarFile.size > 3000000) {
+            setError("The file is too large. Allowed maximum size is 3 MB.")
             return false
         }
 

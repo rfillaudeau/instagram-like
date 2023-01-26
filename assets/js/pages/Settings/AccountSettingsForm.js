@@ -1,10 +1,9 @@
-import React, {useContext, useRef, useState} from "react"
-import AuthContext from "../../contexts/AuthContext"
-import axios from "axios"
+import React, {useRef, useState} from "react"
+import {useAuth} from "../../contexts/AuthContext"
 import useForm from "../../hooks/useForm"
 
 function AccountSettingsForm() {
-    const {currentUser, updateUser} = useContext(AuthContext)
+    const {currentUser, updateUser, api} = useAuth()
     const {inputs, handleChange} = useForm({
         username: currentUser.username,
         email: currentUser.email,
@@ -27,7 +26,7 @@ function AccountSettingsForm() {
             return
         }
 
-        axios.patch("/api/update-account", {
+        api.patch("/update-account", {
             username: inputs.username,
             email: inputs.email,
             bio: inputs.bio

@@ -1,10 +1,12 @@
 import React, {useEffect, useState} from "react"
-import axios, {CanceledError} from "axios"
+import {CanceledError} from "axios"
 import useForceUpdate from "../../hooks/useForceUpdate"
 import PostCard from "./PostCard"
 import PostCardPlaceholder from "./PostCardPlaceholder"
+import {useAuth} from "../../contexts/AuthContext"
 
 function Feed() {
+    const {api} = useAuth()
     const postsPerPage = 5
     const postsPlaceholder = [...Array(postsPerPage).keys()]
     const [posts, setPosts] = useState(postsPlaceholder)
@@ -32,39 +34,36 @@ function Feed() {
 
         setCanLoadMore(false)
 
-        axios
-            .get("/api/posts/feed", {
-                signal: controller.signal,
-                params: {
-                    page: page,
-                    itemsPerPage: postsPerPage
-                }
-            })
-            .then(response => {
-                const newPosts = response.data
+        api.get("/posts/feed", {
+            signal: controller.signal,
+            params: {
+                page: page,
+                itemsPerPage: postsPerPage
+            }
+        }).then(response => {
+            const newPosts = response.data
 
-                setPosts(prevPosts => {
-                    let p = [
-                        ...prevPosts,
-                        ...newPosts
-                    ]
+            setPosts(prevPosts => {
+                let p = [
+                    ...prevPosts,
+                    ...newPosts
+                ]
 
-                    if (page === 1) {
-                        p = newPosts
-                    }
-
-                    return p
-                })
-
-                setCanLoadMore(newPosts.length >= postsPerPage)
-            })
-            .catch(error => {
-                if (error instanceof CanceledError) {
-                    return
+                if (page === 1) {
+                    p = newPosts
                 }
 
-                console.error(error)
+                return p
             })
+
+            setCanLoadMore(newPosts.length >= postsPerPage)
+        }).catch(error => {
+            if (error instanceof CanceledError) {
+                return
+            }
+
+            console.error(error)
+        })
 
         return () => {
             controller.abort()
@@ -77,7 +76,7 @@ function Feed() {
 
     const postElements = posts.map((post, index) => (
         <div key={index} className="mb-3">
-            {post.id === undefined ? <PostCardPlaceholder /> : <PostCard post={post} />}
+            {post.id === undefined ? <PostCardPlaceholder/> : <PostCard post={post}/>}
         </div>
     ))
 

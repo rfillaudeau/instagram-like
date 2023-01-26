@@ -1,7 +1,4 @@
 import React from "react"
-import FollowButton from "../../components/FollowButton"
-import abbreviateNumber from "../../utils/abreviateNumber"
-import nl2br from "../../utils/nl2br"
 import PostPreviewPlaceholder from "../../components/PostPreviewPlaceholder"
 
 function ProfilePlaceholder() {
@@ -25,18 +22,22 @@ function ProfilePlaceholder() {
                                 <div className="flex-fill fs-2 fw-semibold d-flex">
                                     <span className="placeholder col-4 align-self-center"></span>
                                 </div>
-                                <a href="#" className="btn btn-primary disabled placeholder col-2 align-self-center"></a>
+                                <a href="#"
+                                   className="btn btn-primary disabled placeholder col-2 align-self-center"></a>
                             </div>
 
                             <div className="row mb-3">
                                 <div className="col">
-                                    <b><span className="placeholder col-1"></span></b> <span className="placeholder col-4"></span>
+                                    <b><span className="placeholder col-1"></span></b> <span
+                                    className="placeholder col-4"></span>
                                 </div>
                                 <div className="col text-center">
-                                    <b><span className="placeholder col-1"></span></b> <span className="placeholder col-4"></span>
+                                    <b><span className="placeholder col-1"></span></b> <span
+                                    className="placeholder col-4"></span>
                                 </div>
                                 <div className="col text-end">
-                                    <b><span className="placeholder col-1"></span></b> <span className="placeholder col-4"></span>
+                                    <b><span className="placeholder col-1"></span></b> <span
+                                    className="placeholder col-4"></span>
                                 </div>
                             </div>
 

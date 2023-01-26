@@ -8,22 +8,19 @@ use App\Repository\LikeRepository;
 use ArrayObject;
 use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class PostNormalizer implements NormalizerInterface
+final readonly class PostNormalizer implements NormalizerInterface
 {
     public function __construct(
-        // Known issue workaround (https://github.com/symfony/maker-bundle/issues/1252)
-        #[Autowire(service: ObjectNormalizer::class)]
-        private readonly NormalizerInterface $normalizer,
-        private readonly Security $security,
-        private readonly LikeRepository $likeRepository,
-        private readonly string $postsRelativeDirectory
+        private NormalizerInterface $normalizer,
+        private Security            $security,
+        private LikeRepository      $likeRepository,
+        private string              $postsRelativeDirectory
     )
-    {}
+    {
+    }
 
     /**
      * @param Post $object

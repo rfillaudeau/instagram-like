@@ -24,7 +24,7 @@ class UserDto
 
     #[Assert\NotNull(groups: [self::GROUP_UPDATE_AVATAR])]
     #[Assert\Image(
-        maxSize: '2m',
+        maxSize: '3m',
         maxWidth: 3000,
         maxHeight: 3000,
         groups: [self::GROUP_UPDATE_AVATAR]

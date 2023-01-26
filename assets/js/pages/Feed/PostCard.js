@@ -1,12 +1,10 @@
-import React, {useContext, useState} from "react"
+import React, {useState} from "react"
 import {Link} from "react-router-dom"
 import abbreviateNumber from "../../utils/abreviateNumber"
 import LikeButton from "../../components/LikeButton"
 import ShowMoreText from "../../components/ShowMoreText"
-import AuthContext from "../../contexts/AuthContext"
 
 function PostCard({post}) {
-    const {currentUser} = useContext(AuthContext)
     const [likeCount, setLikeCount] = useState(post.likeCount)
 
     const createdAtDate = (new Date(post.createdAt)).toLocaleString()

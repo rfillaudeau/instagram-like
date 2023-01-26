@@ -1,9 +1,8 @@
-import React, {useContext, useEffect, useRef, useState} from "react"
+import React, {useEffect, useRef, useState} from "react"
 import {Link, useNavigate, useParams} from "react-router-dom"
-import axios from "axios"
 import PostPlaceholder from "./PostPlaceholder"
 import FollowButton from "../../components/FollowButton"
-import AuthContext from "../../contexts/AuthContext"
+import {useAuth} from "../../contexts/AuthContext"
 import LikeButton from "../../components/LikeButton"
 import abbreviateNumber from "../../utils/abreviateNumber"
 import ShowMoreText from "../../components/ShowMoreText"
@@ -16,7 +15,7 @@ function Post() {
     const [post, setPost] = useState(null)
     const [likeCount, setLikeCount] = useState(0)
     const [isNotFound, setIsNotFound] = useState(false)
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser, api} = useAuth()
     const deleteButtonRef = useRef(null)
 
     useEffect(() => {
@@ -24,26 +23,22 @@ function Post() {
 
         setIsNotFound(false)
 
-        axios
-            .get(`/api/posts/${id}`, {
-                signal: controller.signal
-            })
-            .then(response => {
-                console.log(response.data)
-                setPost(response.data)
-                setLikeCount(response.data.likeCount)
-            })
-            .catch(error => {
-                if (!error.response) {
-                    return
-                }
+        api.get(`/posts/${id}`, {
+            signal: controller.signal
+        }).then(response => {
+            setPost(response.data)
+            setLikeCount(response.data.likeCount)
+        }).catch(error => {
+            if (!error.response) {
+                return
+            }
 
-                if (error.response.status === 404) {
-                    setIsNotFound(true)
-                } else {
-                    console.log("Unknown error")
-                }
-            })
+            if (error.response.status === 404) {
+                setIsNotFound(true)
+            } else {
+                console.log("Unknown error")
+            }
+        })
 
         return () => {
             controller.abort()
@@ -89,17 +84,13 @@ function Post() {
 
         deleteButtonRef.current.className += " disabled"
 
-        axios
-            .delete(`/api/posts/${id}`)
-            .then(() => {
-                navigate(`/${post.user.username}`)
-            })
-            .catch(error => {
-                console.error(error)
-            })
-            .finally(() => {
-                deleteButtonRef.current.className = deleteButtonRef.current.className.replace("disabled", "")
-            })
+        api.delete(`/posts/${id}`).then(() => {
+            navigate(`/${post.user.username}`)
+        }).catch(error => {
+            console.error(error)
+        }).finally(() => {
+            deleteButtonRef.current.className = deleteButtonRef.current.className.replace("disabled", "")
+        })
     }
 
     let actionsButtons = null
@@ -143,7 +134,7 @@ function Post() {
                                         <img
                                             src={post.user.avatarFilepath}
                                             className="rounded img-fluid avatar-sm"
-                                            alt={`${user.username}'s avatar`}
+                                            alt={`${post.user.username}'s avatar`}
                                         />
                                     </Link>
                                 </div>

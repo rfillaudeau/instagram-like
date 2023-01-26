@@ -28,7 +28,7 @@ class Post
     private ?string $pictureFilename = null;
 
     #[Assert\NotNull(groups: [self::GROUP_CREATE])]
-    #[Assert\Image(maxSize: '2m', maxWidth: 3000, maxHeight: 3000)]
+    #[Assert\Image(maxSize: '3m', maxWidth: 3000, maxHeight: 3000)]
     private ?File $picture = null;
 
     #[ORM\Column(type: Types::TEXT)]
