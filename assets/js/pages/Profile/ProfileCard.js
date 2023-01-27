@@ -27,11 +27,11 @@ function ProfileCard({user: propsUser}) {
         <div className="card mb-2">
             <div className="card-body">
                 <div className="d-flex">
-                    <div className="me-3">
+                    <div className="me-3 flex-shrink-0">
                         <img
                             src={user.avatarFilepath}
                             className="rounded img-fluid avatar-lg"
-                            alt={`${user.username}'s avatar`} />
+                            alt={`${user.username}'s avatar`}/>
                     </div>
 
                     <div className="flex-fill">

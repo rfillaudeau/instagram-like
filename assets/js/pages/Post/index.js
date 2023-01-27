@@ -84,7 +84,7 @@ function Post() {
 
         deleteButtonRef.current.className += " disabled"
 
-        api.delete(`/posts/${id}`).then(() => {
+        api.delete(`/old-posts/${id}`).then(() => {
             navigate(`/${post.user.username}`)
         }).catch(error => {
             console.error(error)

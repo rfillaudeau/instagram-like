@@ -1,6 +1,7 @@
 import React, {useRef, useState} from "react"
 import useForm from "../hooks/useForm"
 import {useAuth} from "../contexts/AuthContext"
+import fileToBase64 from "../utils/fileToBase64"
 
 function PostFormModal({modalId, post: defaultPost}) {
     const {api} = useAuth()
@@ -21,7 +22,7 @@ function PostFormModal({modalId, post: defaultPost}) {
     const cancelButtonRef = useRef(null)
     const fileInputRef = useRef(null)
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault()
 
         submitButtonRef.current.disabled = true
@@ -32,21 +33,18 @@ function PostFormModal({modalId, post: defaultPost}) {
         }
 
         if (post === null) {
-            handleCreate()
+            await handleCreate()
         } else {
             handleUpdate()
         }
     }
 
-    function handleCreate() {
-        let formData = new FormData()
-        formData.append("picture", fileInputs.picture[0])
-        formData.append("description", inputs.description)
+    async function handleCreate() {
+        let base64Picture = await fileToBase64(fileInputs.picture[0])
 
-        api.post("/posts", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
+        api.post("/posts", {
+            description: inputs.description,
+            base64Picture
         }).then(response => {
             const customEvent = new CustomEvent("app:post-created", {
                 detail: {
@@ -75,7 +73,7 @@ function PostFormModal({modalId, post: defaultPost}) {
 
         formData.append("description", inputs.description)
 
-        api.post(`/posts/${post.id}`, formData, {
+        api.post(`/old-posts/${post.id}`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }

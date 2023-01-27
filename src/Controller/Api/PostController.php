@@ -37,76 +37,6 @@ class PostController extends AbstractApiController
     {
     }
 
-    #[Route('', name: 'create', methods: [Request::METHOD_POST])]
-    #[IsGranted(User::ROLE_USER)]
-    public function create(Request $request, UserRepository $userRepository): JsonResponse
-    {
-        $user = $this->getUser();
-
-        $post = (new Post())
-            ->setUser($user)
-            ->setDescription($request->get('description', ''))
-            ->setPicture($request->files->get('picture'))
-            ->setCreatedAt(new DateTime())
-            ->setUpdatedAt(new DateTime());
-
-        $errors = $this->validator->validate($post, null, [Post::GROUP_DEFAULT, Post::GROUP_CREATE]);
-        if (count($errors) > 0) {
-            throw new ValidationFailedException($post, $errors);
-        }
-
-        $file = $this->handleNewPostPicture($post->getPicture());
-        if (null === $file) {
-            throw new HttpException(
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'Unable to save the file'
-            );
-        }
-
-        $post->setPictureFilename($file->getFilename());
-
-        $this->entityManager->persist($post);
-        $this->entityManager->flush();
-
-        $post->setPicture(null);
-
-        $userRepository->incrementPostCount($user);
-
-        // Refresh the user postCount
-        $this->entityManager->refresh($user);
-
-        return $this->json($post, Response::HTTP_CREATED, [], [
-            AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
-        ]);
-    }
-
-    private function handleNewPostPicture(File $picture): ?File
-    {
-        $newFilename = sprintf(
-            '%s-%d.%s',
-            uniqid(),
-            (new DateTime())->getTimestamp(),
-            $picture->guessExtension()
-        );
-
-        try {
-            $finalFile = $picture->move(
-                $this->postsDirectory,
-                $newFilename
-            );
-        } catch (FileException $exception) {
-            $this->logger->error($exception->getMessage(), [
-                'trace' => $exception->getTraceAsString()
-            ]);
-
-            return null;
-        }
-
-        $this->imageResizer->resizePostPicture($finalFile->getPathname());
-
-        return $finalFile;
-    }
-
     /**
      * Using POST method instead of PUT/PATCH to be able to receive files
      */
@@ -150,6 +80,33 @@ class PostController extends AbstractApiController
         return $this->json($post, Response::HTTP_OK, [], [
             AbstractNormalizer::GROUPS => [Post::GROUP_READ, User::GROUP_READ]
         ]);
+    }
+
+    private function handleNewPostPicture(File $picture): ?File
+    {
+        $newFilename = sprintf(
+            '%s-%d.%s',
+            uniqid(),
+            (new DateTime())->getTimestamp(),
+            $picture->guessExtension()
+        );
+
+        try {
+            $finalFile = $picture->move(
+                $this->postsDirectory,
+                $newFilename
+            );
+        } catch (FileException $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'trace' => $exception->getTraceAsString()
+            ]);
+
+            return null;
+        }
+
+        $this->imageResizer->resizePostPicture($finalFile->getPathname());
+
+        return $finalFile;
     }
 
     private function removePostFile(?string $filename): void
