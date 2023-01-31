@@ -23,7 +23,7 @@ function PostCard({post}) {
                 <div className="align-self-center">
                     <Link to={`/${post.user.username}`} className="">
                         <img
-                            src={post.user.avatarFilepath}
+                            src={post.user.avatarFilePath}
                             className="rounded img-fluid avatar-sm"
                             alt={`${post.user.username}'s avatar`}
                         />
@@ -51,7 +51,7 @@ function PostCard({post}) {
                 </div>
             </div>
 
-            <img src={post.pictureFilepath} className="img-fluid" alt="..."/>
+            <img src={post.pictureFilePath} className="img-fluid" alt="..."/>
 
             <div className="card-body">
                 <div className="d-flex align-items-center mb-3">

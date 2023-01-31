@@ -84,7 +84,7 @@ function Post() {
 
         deleteButtonRef.current.className += " disabled"
 
-        api.delete(`/old-posts/${id}`).then(() => {
+        api.delete(`/posts/${id}`).then(() => {
             navigate(`/${post.user.username}`)
         }).catch(error => {
             console.error(error)
@@ -122,7 +122,7 @@ function Post() {
                     <div className="row">
                         <div className="col-7 pe-2">
                             <img
-                                src={`/uploads/posts/${post.pictureFilename}`}
+                                src={post.pictureFilePath}
                                 className="rounded img-fluid"
                                 alt="..."
                             />
@@ -132,7 +132,7 @@ function Post() {
                                 <div className="align-self-center">
                                     <Link to={`/${post.user.username}`}>
                                         <img
-                                            src={post.user.avatarFilepath}
+                                            src={post.user.avatarFilePath}
                                             className="rounded img-fluid avatar-sm"
                                             alt={`${post.user.username}'s avatar`}
                                         />

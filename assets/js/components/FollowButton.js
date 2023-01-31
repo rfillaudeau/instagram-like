@@ -11,7 +11,9 @@ function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
             followButtonRef.current.disabled = true
         }
 
-        api.post(`/users/${user.username}/follow`).then(() => {
+        api.post("/follow", {
+            following: user.id
+        }).then(() => {
             setUser(prevUser => ({
                 ...prevUser,
                 isFollowed: true
@@ -34,7 +36,7 @@ function FollowButton({className, user: propsUser, onFollow, onUnfollow}) {
             followButtonRef.current.disabled = true
         }
 
-        api.delete(`/users/${user.username}/follow`).then(() => {
+        api.delete(`/users/${user.id}/follow`).then(() => {
             setUser(prevUser => ({
                 ...prevUser,
                 isFollowed: false

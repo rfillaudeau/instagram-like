@@ -35,7 +35,7 @@ function PostFormModal({modalId, post: defaultPost}) {
         if (post === null) {
             await handleCreate()
         } else {
-            handleUpdate()
+            await handleUpdate()
         }
     }
 
@@ -64,20 +64,16 @@ function PostFormModal({modalId, post: defaultPost}) {
         })
     }
 
-    function handleUpdate() {
-        let formData = new FormData()
-
-        if (fileInputs.picture.length > 0) {
-            formData.append("picture", fileInputs.picture[0])
+    async function handleUpdate() {
+        let data = {
+            description: inputs.description
         }
 
-        formData.append("description", inputs.description)
+        if (fileInputs.picture.length > 0) {
+            data.base64Picture = await fileToBase64(fileInputs.picture[0])
+        }
 
-        api.post(`/old-posts/${post.id}`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        }).then(response => {
+        api.put(`/posts/${post.id}`, data).then(response => {
             console.log(response.data)
 
             const customEvent = new CustomEvent("app:post-updated", {
@@ -151,7 +147,7 @@ function PostFormModal({modalId, post: defaultPost}) {
         if (fileInputs.picture.length > 0) {
             pictureSrc = URL.createObjectURL(fileInputs.picture[0])
         } else {
-            pictureSrc = post.pictureFilepath
+            pictureSrc = post.pictureFilePath
         }
 
         picturePreview = (

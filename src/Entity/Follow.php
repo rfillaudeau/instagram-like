@@ -2,31 +2,95 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata as ApiMethod;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Link;
 use App\Repository\FollowRepository;
+use App\Validator as AppAssert;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
+use Symfony\Component\Validator\Constraints as Assert;
 
+// POST /follows {following: :userId}
+// DELETE /follows {following: :userId}
+
+#[ApiResource(
+    operations: [
+        new ApiMethod\GetCollection(
+            uriTemplate: '/users/{id}/followers',
+            uriVariables: [
+                'id' => new Link(
+                    toProperty: 'following',
+                    fromClass: User::class
+                )
+            ],
+        ),
+        new ApiMethod\GetCollection(
+            uriTemplate: '/users/{id}/following',
+            uriVariables: [
+                'id' => new Link(
+                    toProperty: 'user',
+                    fromClass: User::class
+                )
+            ],
+        ),
+        new ApiMethod\Post(
+            security: 'is_granted("' . User::ROLE_USER . '")',
+        ),
+    ],
+    normalizationContext: [
+        AbstractNormalizer::GROUPS => [
+            Follow::GROUP_READ,
+            User::GROUP_READ,
+        ],
+        AbstractObjectNormalizer::SKIP_NULL_VALUES => false
+    ],
+    validationContext: [
+        AbstractNormalizer::GROUPS => [
+            Follow::GROUP_WRITE,
+        ],
+    ],
+)]
 #[ORM\Entity(repositoryClass: FollowRepository::class)]
+#[AppAssert\UniquePropertyAssociation(
+    properties: ['user', 'following'],
+    groups: [self::GROUP_WRITE]
+)]
 class Follow
 {
+    public const GROUP_READ = 'follow:read';
+    public const GROUP_WRITE = 'follow:write';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Ignore]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private User $user;
+    #[Groups([self::GROUP_READ])]
+    #[Assert\NotNull(groups: [self::GROUP_WRITE])]
+    private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private User $following;
+    #[Groups([self::GROUP_READ])]
+    #[Assert\NotNull(groups: [self::GROUP_WRITE])]
+    #[AppAssert\NotCurrentUser(groups: [self::GROUP_WRITE])]
+    private ?User $following = null;
 
     #[ORM\Column]
-    private \DateTime $createdAt;
+    #[Groups([self::GROUP_READ])]
+    private DateTime $createdAt;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
     }
 
     public function getId(): ?int
@@ -34,7 +98,7 @@ class Follow
         return $this->id;
     }
 
-    public function getUser(): User
+    public function getUser(): ?User
     {
         return $this->user;
     }
@@ -45,7 +109,7 @@ class Follow
         return $this;
     }
 
-    public function getFollowing(): User
+    public function getFollowing(): ?User
     {
         return $this->following;
     }
@@ -56,14 +120,8 @@ class Follow
         return $this;
     }
 
-    public function getCreatedAt(): \DateTime
+    public function getCreatedAt(): DateTime
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTime $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-        return $this;
     }
 }

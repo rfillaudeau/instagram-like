@@ -29,21 +29,27 @@ final readonly class PostNormalizer implements NormalizerInterface
      * @return float|array|ArrayObject|bool|int|string|null
      * @throws ExceptionInterface|NonUniqueResultException
      */
-    public function normalize(mixed $object, string $format = null, array $context = []): float|array|ArrayObject|bool|int|string|null
+    public function normalize(
+        mixed  $object,
+        string $format = null,
+        array  $context = []
+    ): float|array|ArrayObject|bool|int|string|null
     {
-        $data = $this->normalizer->normalize($object, $format, $context);
+        $object->setPictureFilePath(sprintf(
+            '%s/%s',
+            $this->postsRelativeDirectory,
+            $object->getPictureFilename()
+        ));
 
         /** @var User $user */
         $user = $this->security->getUser();
 
-        $data['isLiked'] = null !== $user && null !== $this->likeRepository->findOneByUserAndPost($user, $object);
-        $data['pictureFilepath'] = sprintf(
-            '%s/%s',
-            $this->postsRelativeDirectory,
-            $object->getPictureFilename()
+        $object->setIsLiked(
+            null !== $user
+            && null !== $this->likeRepository->findOneByUserAndPost($user, $object)
         );
 
-        return $data;
+        return $this->normalizer->normalize($object, $format, $context);
     }
 
     public function supportsNormalization(mixed $data, string $format = null, array $context = []): bool

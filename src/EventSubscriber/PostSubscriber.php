@@ -9,8 +9,12 @@ use App\Repository\UserRepository;
 use App\Service\ImageResizer;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -24,6 +28,7 @@ final readonly class PostSubscriber implements EventSubscriberInterface
         private string                 $postsDirectory,
         private EntityManagerInterface $entityManager,
         private UserRepository         $userRepository,
+        private LoggerInterface        $logger,
     )
     {
     }
@@ -32,42 +37,44 @@ final readonly class PostSubscriber implements EventSubscriberInterface
     {
         return [
             KernelEvents::VIEW => [
-                ['setUser', EventPriorities::PRE_VALIDATE],
                 ['handlePicture', EventPriorities::PRE_WRITE],
-                ['afterWrite', EventPriorities::POST_WRITE],
+                ['handleUserPostCount', EventPriorities::PRE_WRITE],
             ],
         ];
-    }
-
-    public function setUser(ViewEvent $event): void
-    {
-        /** @var User|null $user */
-        $user = $this->security->getUser();
-        $post = $event->getControllerResult();
-        $method = $event->getRequest()->getMethod();
-
-        if (!($post instanceof Post) || Request::METHOD_POST !== $method || null === $user) {
-            return;
-        }
-
-        $post->setUser($user);
     }
 
     public function handlePicture(ViewEvent $event): void
     {
         $post = $event->getControllerResult();
-        $method = $event->getRequest()->getMethod();
-
-        if (!($post instanceof Post) || Request::METHOD_POST !== $method || null === $post->getBase64Picture()) {
+        if (!($post instanceof Post) || null === $post->getBase64Picture()) {
             return;
         }
 
-        $file = $this->handleNewPostPicture($post->getBase64Picture());
-        $post->setPictureFilename($file->getFilename());
+        switch ($event->getRequest()->getMethod()) {
+            case Request::METHOD_POST:
+            case Request::METHOD_PUT:
+            case Request::METHOD_PATCH:
+                $newFile = $this->saveAndResizeNewPostPicture($post->getBase64Picture());
+                if (null !== $newFile) {
+                    // Remove the old file
+                    $this->removePostFile($post->getPictureFilename());
+
+                    $post->setPictureFilename($newFile->getFilename());
+                }
+                break;
+
+            case Request::METHOD_DELETE:
+                $this->removePostFile($post->getPictureFilename());
+                break;
+        }
     }
 
-    private function handleNewPostPicture(File $picture): File
+    private function saveAndResizeNewPostPicture(?File $picture): ?File
     {
+        if (null === $picture) {
+            return null;
+        }
+
         $newFilename = sprintf(
             '%s-%d.%s',
             uniqid(),
@@ -75,28 +82,64 @@ final readonly class PostSubscriber implements EventSubscriberInterface
             $picture->guessExtension()
         );
 
-        $finalFile = $picture->move(
-            $this->postsDirectory,
-            $newFilename
-        );
+        try {
+            $finalFile = $picture->move(
+                $this->postsDirectory,
+                $newFilename
+            );
+        } catch (FileException $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'trace' => $exception->getTraceAsString()
+            ]);
+
+            return null;
+        }
 
         $this->imageResizer->resizePostPicture($finalFile->getPathname());
 
         return $finalFile;
     }
 
-    public function afterWrite(ViewEvent $event)
+    private function removePostFile(?string $filename): void
+    {
+        if (null === $filename) {
+            return;
+        }
+
+        $filesystem = new Filesystem();
+
+        try {
+            $filesystem->remove(sprintf(
+                '%s/%s',
+                $this->postsDirectory,
+                $filename
+            ));
+        } catch (IOException $exception) {
+            $this->logger->error($exception->getMessage(), [
+                'trace' => $exception->getTraceAsString()
+            ]);
+        }
+    }
+
+    public function handleUserPostCount(ViewEvent $event)
     {
         /** @var User|null $user */
         $user = $this->security->getUser();
         $post = $event->getControllerResult();
-        $method = $event->getRequest()->getMethod();
 
-        if (!($post instanceof Post) || Request::METHOD_POST !== $method || null === $user) {
+        if (!($post instanceof Post) || null === $user) {
             return;
         }
 
-        $this->userRepository->incrementPostCount($user);
+        switch ($event->getRequest()->getMethod()) {
+            case Request::METHOD_POST:
+                $this->userRepository->incrementPostCount($user);
+                break;
+
+            case Request::METHOD_DELETE:
+                $this->userRepository->decrementPostCount($post->getUser());
+                break;
+        }
 
         // Refresh the user postCount
         $this->entityManager->refresh($user);

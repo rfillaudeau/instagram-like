@@ -29,7 +29,7 @@ function ProfileCard({user: propsUser}) {
                 <div className="d-flex">
                     <div className="me-3 flex-shrink-0">
                         <img
-                            src={user.avatarFilepath}
+                            src={user.avatarFilePath}
                             className="rounded img-fluid avatar-lg"
                             alt={`${user.username}'s avatar`}/>
                     </div>

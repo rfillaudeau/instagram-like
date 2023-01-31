@@ -78,7 +78,7 @@ function Header() {
                                             >
                                                 <div className="align-self-center me-2">
                                                     <img
-                                                        src={currentUser.avatarFilepath}
+                                                        src={currentUser.avatarFilePath}
                                                         className="rounded avatar-sm"
                                                         alt={`${currentUser.username}'s avatar`}
                                                     />

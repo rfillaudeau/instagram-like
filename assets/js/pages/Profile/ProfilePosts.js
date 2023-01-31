@@ -17,11 +17,12 @@ function ProfilePosts({user}) {
 
         const controller = new AbortController()
 
-        api.get(`/users/${user.username}/posts`, {
+        api.get(`/posts`, {
             signal: controller.signal,
             params: {
                 page: page,
-                itemsPerPage: postsPerPage
+                itemsPerPage: postsPerPage,
+                user: user.id
             }
         }).then(response => {
             const newPosts = response.data

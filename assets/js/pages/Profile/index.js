@@ -17,7 +17,7 @@ function Profile() {
 
         setIsNotFound(false)
 
-        api.get(`/users/${username}`, {
+        api.get(`/users/username/${username}`, {
             signal: controller.signal
         }).then(response => {
             setUser(response.data)

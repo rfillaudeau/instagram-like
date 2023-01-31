@@ -2,6 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata as ApiMethod;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\OpenApi\Model\Operation;
+use App\Controller\Api\User\FollowUser;
+use App\Controller\Api\User\GetByUsername;
+use App\Controller\Api\User\GetCurrentUser;
+use App\Controller\Api\User\UnfollowUser;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -9,7 +16,49 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 
+#[ApiResource(
+    operations: [
+        new ApiMethod\Get(
+            uriTemplate: '/users/me',
+            controller: GetCurrentUser::class,
+            openapi: new Operation(
+                summary: 'Retrieves the current user.',
+            ),
+            security: 'is_granted("' . User::ROLE_USER . '")',
+            read: false
+        ),
+        new ApiMethod\Get(
+            uriTemplate: '/users/{id}',
+            requirements: ['id' => '\d+'],
+            name: 'api_get_user',
+        ),
+        new ApiMethod\Get(
+            uriTemplate: '/users/username/{username}',
+            controller: GetByUsername::class,
+            openapi: new Operation(
+                summary: 'Retrieves a User resource by the username.',
+            ),
+            read: false
+        ),
+        new ApiMethod\Delete(
+            uriTemplate: '/users/{id}/follow',
+            requirements: ['id' => '\d+'],
+            controller: UnfollowUser::class,
+            security: 'is_granted("' . User::ROLE_USER . '")',
+            read: false,
+        ),
+    ],
+    normalizationContext: [
+        AbstractNormalizer::GROUPS => [
+            User::GROUP_READ,
+        ],
+        AbstractObjectNormalizer::SKIP_NULL_VALUES => false
+    ],
+)]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[UniqueEntity('username')]
 #[UniqueEntity('email')]
@@ -48,8 +97,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $bio = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups([self::GROUP_READ])]
+    #[Ignore]
     private ?string $avatarFilename = null;
+
+    #[Groups([self::GROUP_READ])]
+    private ?string $avatarFilePath = null;
 
     #[ORM\Column]
     #[Groups([self::GROUP_READ])]
@@ -62,6 +114,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups([self::GROUP_READ])]
     private int $followerCount = 0;
+
+    #[Groups([self::GROUP_READ])]
+    private bool $isFollowed = false;
+
+    public static function getAvailableRoles(): array
+    {
+        return [
+            self::ROLE_USER,
+            self::ROLE_ADMIN,
+        ];
+    }
 
     public function getId(): ?int
     {
@@ -98,7 +161,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
+    }
+
+    public function addRole(string $role): self
+    {
+        $roles = $this->getRoles();
+        $roles[] = $role;
+
+        $this->roles = array_unique($roles);
+
+        return $this;
     }
 
     /**
@@ -120,16 +193,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function addRole(string $role): self
-    {
-        $roles = $this->getRoles();
-        $roles[] = $role;
-
-        $this->roles = array_unique($roles);
-
-        return $this;
-    }
-
     public function removeRole(string $role): self
     {
         $roles = $this->getRoles();
@@ -144,14 +207,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roles = $roles;
 
         return $this;
-    }
-
-    public static function getAvailableRoles(): array
-    {
-        return [
-            self::ROLE_USER,
-            self::ROLE_ADMIN,
-        ];
     }
 
     /**
@@ -201,6 +256,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getAvatarFilePath(): ?string
+    {
+        return $this->avatarFilePath;
+    }
+
+    public function setAvatarFilePath(?string $avatarFilePath): self
+    {
+        $this->avatarFilePath = $avatarFilePath;
+        return $this;
+    }
+
     public function getPostCount(): int
     {
         return $this->postCount;
@@ -231,6 +297,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFollowerCount(int $followerCount): self
     {
         $this->followerCount = $followerCount;
+        return $this;
+    }
+
+    public function isFollowed(): bool
+    {
+        return $this->isFollowed;
+    }
+
+    public function setIsFollowed(bool $isFollowed): self
+    {
+        $this->isFollowed = $isFollowed;
         return $this;
     }
 }

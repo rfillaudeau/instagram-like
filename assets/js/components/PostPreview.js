@@ -25,7 +25,7 @@ function PostPreview({post}) {
         >
             {showLikes && likesBlock}
 
-            <img src={post.pictureFilepath} className="rounded img-fluid" alt="..." />
+            <img src={post.pictureFilePath} className="rounded img-fluid" alt="..."/>
         </Link>
     )
 }

@@ -31,15 +31,6 @@ final readonly class UserNormalizer implements NormalizerInterface
      */
     public function normalize(mixed $object, string $format = null, array $context = []): float|array|ArrayObject|bool|int|string|null
     {
-        $data = $this->normalizer->normalize($object, $format, $context);
-
-        /** @var User $user */
-        $user = $this->security->getUser();
-
-        $data['isFollowed'] = null !== $user &&
-            $user !== $object &&
-            null !== $this->followRepository->findOneByUserAndFollowing($user, $object);
-
         $avatarFilepath = $this->defaultAvatarRelativePath;
         if (null !== $object->getAvatarFilename()) {
             $avatarFilepath = sprintf(
@@ -49,9 +40,18 @@ final readonly class UserNormalizer implements NormalizerInterface
             );
         }
 
-        $data['avatarFilepath'] = $avatarFilepath;
+        $object->setAvatarFilePath($avatarFilepath);
 
-        return $data;
+        /** @var User $user */
+        $user = $this->security->getUser();
+
+        $object->setIsFollowed(
+            null !== $user
+            && $user !== $object
+            && null !== $this->followRepository->findOneByUserAndFollowing($user, $object)
+        );
+
+        return $this->normalizer->normalize($object, $format, $context);
     }
 
     public function supportsNormalization(mixed $data, string $format = null, array $context = []): bool
