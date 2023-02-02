@@ -35,7 +35,6 @@ class LikeRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('post', $post)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
 }

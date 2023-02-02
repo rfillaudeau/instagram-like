@@ -1,5 +1,6 @@
 import React, {useRef, useState} from "react"
 import {useAuth} from "../../contexts/AuthContext"
+import fileToBase64 from "../../utils/fileToBase64"
 
 function ChangeAvatarForm() {
     const {currentUser, updateUser, api} = useAuth()
@@ -11,7 +12,7 @@ function ChangeAvatarForm() {
     const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault()
 
         setSuccess("")
@@ -23,25 +24,14 @@ function ChangeAvatarForm() {
             return
         }
 
-        let formData = new FormData()
-        formData.append("avatar", fileInputs.avatar[0])
+        let base64Avatar = await fileToBase64(fileInputs.avatar[0])
 
-        api.post("/update-avatar", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
+        api.put(`/users/${currentUser.id}/avatar`, {
+            base64Avatar
         }).then(response => {
-            if (response.data.avatarFilename == null || response.data.avatarFilepath == null) {
-                setError("Unknown Error.")
-                return
-            }
+            updateUser(response.data)
 
             setSuccess("Avatar successfully updated")
-
-            updateUser({
-                avatarFilename: response.data.avatarFilename,
-                avatarFilepath: response.data.avatarFilepath
-            })
         }).catch(error => {
             if (!error.response) {
                 return
@@ -95,19 +85,19 @@ function ChangeAvatarForm() {
 
             <div className="mb-3 d-flex">
                 <img
-                    src={currentUser.avatarFilepath}
+                    src={currentUser.avatarFilePath}
                     className="rounded avatar-lg align-self-end me-3"
                     alt="Avatar large"
                 />
 
                 <img
-                    src={currentUser.avatarFilepath}
+                    src={currentUser.avatarFilePath}
                     className="rounded avatar-md align-self-end me-3"
                     alt="Avatar medium"
                 />
 
                 <img
-                    src={currentUser.avatarFilepath}
+                    src={currentUser.avatarFilePath}
                     className="rounded avatar-sm align-self-end"
                     alt="Avatar small"
                 />

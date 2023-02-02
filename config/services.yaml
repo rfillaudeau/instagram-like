@@ -18,6 +18,7 @@ services:
         bind:
             $defaultAvatarRelativePath: '%default_avatar_relative_path%'
             $avatarsRelativeDirectory: '%avatars_relative_directory%'
+            $avatarsDirectory: '%avatars_directory%'
             $postsRelativeDirectory: '%posts_relative_directory%'
             $postsDirectory: '%posts_directory%'
 
@@ -40,3 +41,7 @@ services:
     App\Serializer\PostNormalizer:
         arguments:
             $normalizer: '@serializer.normalizer.object'
+
+    App\State\UserPasswordHasher:
+        bind:
+            $processor: '@api_platform.doctrine.orm.state.persist_processor'

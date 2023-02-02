@@ -34,7 +34,6 @@ class FollowRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('following', $following)
             ->getQuery()
-            ->getOneOrNullResult()
-            ;
+            ->getOneOrNullResult();
     }
 }

@@ -2,13 +2,11 @@
 
 namespace App\Dto;
 
-use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class UserUpdatePasswordDto
+class UserChangePasswordDto
 {
     #[Assert\NotBlank]
-    #[UserPassword]
     public ?string $currentPlainPassword;
 
     #[Assert\NotBlank]

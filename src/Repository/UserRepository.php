@@ -25,6 +25,18 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @throws NonUniqueResultException
      */
+    public function findOneById(int $id): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @throws NonUniqueResultException
+     */
     public function findOneByEmail(string $email): ?User
     {
         return $this->createQueryBuilder('u')
@@ -48,54 +60,60 @@ class UserRepository extends ServiceEntityRepository
 
     public function incrementPostCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.postCount = u.postCount + 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.postCount = u.postCount + 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }
 
     public function decrementPostCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.postCount = u.postCount - 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.postCount = u.postCount - 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }
 
     public function incrementFollowerCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.followerCount = u.followerCount + 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.followerCount = u.followerCount + 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }
 
     public function decrementFollowerCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.followerCount = u.followerCount - 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.followerCount = u.followerCount - 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }
 
     public function incrementFollowingCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.followingCount = u.followingCount + 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.followingCount = u.followingCount + 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }
 
     public function decrementFollowingCount(User $user): void
     {
-        $this->getEntityManager()->createQuery(
-            'UPDATE App\\Entity\\User u SET u.followingCount = u.followingCount - 1 WHERE u.id = :id'
-        )
+        $this->getEntityManager()->createQuery(sprintf(
+            'UPDATE %s u SET u.followingCount = u.followingCount - 1 WHERE u.id = :id',
+            User::class
+        ))
             ->setParameter('id', $user->getId())
             ->execute();
     }

@@ -3,7 +3,6 @@
 namespace App\EventSubscriber;
 
 use ApiPlatform\Symfony\EventListener\EventPriorities;
-use App\Entity\Follow;
 use App\Entity\Post;
 use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -37,7 +36,7 @@ final readonly class EntitySubscriber implements EventSubscriberInterface
         }
 
         $entity = $event->getControllerResult();
-        if ($entity instanceof Post || $entity instanceof Follow) {
+        if ($entity instanceof Post) {
             $entity->setUser($user);
         }
     }

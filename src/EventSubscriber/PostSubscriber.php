@@ -4,13 +4,11 @@ namespace App\EventSubscriber;
 
 use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\Post;
-use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\ImageResizer;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -23,7 +21,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final readonly class PostSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private Security               $security,
         private ImageResizer           $imageResizer,
         private string                 $postsDirectory,
         private EntityManagerInterface $entityManager,
@@ -123,17 +120,14 @@ final readonly class PostSubscriber implements EventSubscriberInterface
 
     public function handleUserPostCount(ViewEvent $event)
     {
-        /** @var User|null $user */
-        $user = $this->security->getUser();
         $post = $event->getControllerResult();
-
-        if (!($post instanceof Post) || null === $user) {
+        if (!($post instanceof Post)) {
             return;
         }
 
         switch ($event->getRequest()->getMethod()) {
             case Request::METHOD_POST:
-                $this->userRepository->incrementPostCount($user);
+                $this->userRepository->incrementPostCount($post->getUser());
                 break;
 
             case Request::METHOD_DELETE:
@@ -142,6 +136,6 @@ final readonly class PostSubscriber implements EventSubscriberInterface
         }
 
         // Refresh the user postCount
-        $this->entityManager->refresh($user);
+        $this->entityManager->refresh($post->getUser());
     }
 }

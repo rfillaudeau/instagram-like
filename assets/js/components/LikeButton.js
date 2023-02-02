@@ -22,13 +22,11 @@ function LikeButton({post, onLike, onUnlike}) {
                 likeButtonRef.current.disabled = false
             })
         } else {
-            api.post(`/posts/${post.id}/like`).then(response => {
-                if (response.status === 201) {
-                    setIsLiked(prevIsLiked => !prevIsLiked)
+            api.post(`/posts/${post.id}/like`, {}).then(() => {
+                setIsLiked(prevIsLiked => !prevIsLiked)
 
-                    if (onLike instanceof Function) {
-                        onLike()
-                    }
+                if (onLike instanceof Function) {
+                    onLike()
                 }
             }).catch(error => {
                 console.error(error)

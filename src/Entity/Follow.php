@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\Metadata as ApiMethod;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Link;
+use App\Controller\Api\Follow\CreateFollow;
+use App\Controller\Api\Follow\DeleteFollow;
 use App\Repository\FollowRepository;
 use App\Validator as AppAssert;
 use DateTime;
@@ -14,9 +16,6 @@ use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Validator\Constraints as Assert;
-
-// POST /follows {following: :userId}
-// DELETE /follows {following: :userId}
 
 #[ApiResource(
     operations: [
@@ -39,19 +38,33 @@ use Symfony\Component\Validator\Constraints as Assert;
             ],
         ),
         new ApiMethod\Post(
+            uriTemplate: '/users/{id}/follow',
+            controller: CreateFollow::class,
             security: 'is_granted("' . User::ROLE_USER . '")',
+            read: false,
+        ),
+        new ApiMethod\Delete(
+            uriTemplate: '/users/{id}/follow',
+            controller: DeleteFollow::class,
+            security: 'is_granted("' . User::ROLE_USER . '")',
+            read: false,
         ),
     ],
     normalizationContext: [
         AbstractNormalizer::GROUPS => [
-            Follow::GROUP_READ,
+            self::GROUP_READ,
             User::GROUP_READ,
         ],
         AbstractObjectNormalizer::SKIP_NULL_VALUES => false
     ],
+    denormalizationContext: [
+        AbstractNormalizer::GROUPS => [
+            self::GROUP_WRITE,
+        ],
+    ],
     validationContext: [
         AbstractNormalizer::GROUPS => [
-            Follow::GROUP_WRITE,
+            self::GROUP_WRITE,
         ],
     ],
 )]

@@ -11,7 +11,7 @@ function ChangePasswordForm() {
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
-    const {api} = useAuth()
+    const {currentUser, api} = useAuth()
 
     function handleChange(event) {
         const {name, value} = event.target
@@ -34,7 +34,7 @@ function ChangePasswordForm() {
             return
         }
 
-        api.patch("/update-password", {
+        api.put(`/users/${currentUser.id}/password`, {
             currentPlainPassword: inputs.currentPassword,
             newPlainPassword: inputs.newPassword
         }).then(() => {

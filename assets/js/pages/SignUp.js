@@ -30,7 +30,7 @@ function SignUp() {
             return
         }
 
-        axios.post("/api/auth/register", {
+        axios.post("/users", {
             username: inputs.username,
             email: inputs.email,
             plainPassword: inputs.password

@@ -26,7 +26,7 @@ function AccountSettingsForm() {
             return
         }
 
-        api.patch("/update-account", {
+        api.put(`/users/${currentUser.id}`, {
             username: inputs.username,
             email: inputs.email,
             bio: inputs.bio

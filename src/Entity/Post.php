@@ -8,9 +8,6 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata as ApiMethod;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\OpenApi\Model\Operation;
-use App\Controller\Api\Post\LikePost;
-use App\Controller\Api\Post\UnlikePost;
 use App\Filter\OnlyPostsFromFollowingFilter;
 use App\Repository\PostRepository;
 use App\Security\PostVoter;
@@ -64,27 +61,6 @@ use Symfony\Component\Validator\Constraints as Assert;
         ]
     ],
 )]
-#[ApiResource(
-    operations: [
-        new ApiMethod\Post(
-            uriTemplate: '/posts/{id}/like',
-            controller: LikePost::class,
-            openapi: new Operation(
-                summary: 'Like a Post.',
-            ),
-            read: false,
-        ),
-        new ApiMethod\Delete(
-            uriTemplate: '/posts/{id}/like',
-            controller: UnlikePost::class,
-            openapi: new Operation(
-                summary: 'Unlike a Post.',
-            ),
-            read: false,
-        ),
-    ],
-    security: 'is_granted("' . User::ROLE_USER . '")',
-)]
 #[ApiFilter(
     OrderFilter::class,
     properties: [
@@ -119,6 +95,7 @@ class Post
 
     #[Groups([self::GROUP_READ])]
     private ?string $pictureFilePath = null;
+
     #[Groups([self::GROUP_CREATE, self::GROUP_UPDATE])]
     #[Assert\NotNull(groups: [self::GROUP_CREATE])]
     #[Assert\Image(
