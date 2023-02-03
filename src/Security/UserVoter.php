@@ -18,7 +18,7 @@ class UserVoter extends Voter
             return false;
         }
 
-        if (!$subject instanceof User) {
+        if (!($subject instanceof User)) {
             return false;
         }
 
@@ -34,7 +34,7 @@ class UserVoter extends Voter
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
         $loggedUser = $token->getUser();
-        if (!$loggedUser instanceof User) {
+        if (!($loggedUser instanceof User)) {
             // the user must be logged in; if not, deny access
             return false;
         }

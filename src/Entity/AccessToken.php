@@ -62,7 +62,7 @@ class AccessToken
     public function __construct()
     {
         $this->token = bin2hex(random_bytes(60));
-        $this->expiresAt = new DateTime('+1 day');
+        $this->expiresAt = new DateTime('+30 days');
     }
 
     public function getId(): ?int

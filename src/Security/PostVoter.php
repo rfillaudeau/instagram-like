@@ -18,7 +18,7 @@ class PostVoter extends Voter
             return false;
         }
 
-        if (!$subject instanceof Post) {
+        if (!($subject instanceof Post)) {
             return false;
         }
 
@@ -34,12 +34,12 @@ class PostVoter extends Voter
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
         $loggedUser = $token->getUser();
-        if (!$loggedUser instanceof User) {
+        if (!($loggedUser instanceof User)) {
             // the user must be logged in; if not, deny access
             return false;
         }
 
-        return match($attribute) {
+        return match ($attribute) {
             self::UPDATE, self::DELETE => $subject->getUser() === $loggedUser,
             default => throw new \LogicException('This code should not be reached!')
         };

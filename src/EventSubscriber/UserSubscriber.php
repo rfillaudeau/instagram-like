@@ -41,7 +41,7 @@ final readonly class UserSubscriber implements EventSubscriberInterface
         if (
             !($user instanceof User)
             || null === $user->getBase64Avatar()
-            || $event->getRequest()->getMethod() !== Request::METHOD_PUT
+            || Request::METHOD_PUT !== $event->getRequest()->getMethod()
         ) {
             return;
         }

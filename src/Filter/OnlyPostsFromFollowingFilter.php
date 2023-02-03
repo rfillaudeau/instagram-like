@@ -57,8 +57,8 @@ class OnlyPostsFromFollowingFilter extends AbstractFilter
     ): void
     {
         if (
-            $property !== self::PARAMETER_NAME
-            || ($value !== 'true' && $value !== '1')
+            self::PARAMETER_NAME !== $property
+            || ('true' !== $value && '1' !== $value)
             || Post::class !== $resourceClass
             || null === $user = $this->security->getUser()
         ) {
@@ -70,6 +70,7 @@ class OnlyPostsFromFollowingFilter extends AbstractFilter
         $userParameter = $queryNameGenerator->generateParameterName('user');
 
         $queryBuilder
+            ->distinct()
             ->leftJoin(
                 Follow::class,
                 $joinAlias,

@@ -9,7 +9,7 @@ function Header() {
     function signOut(event) {
         event.preventDefault()
 
-        api.post("/auth/revoke")
+        api.delete("/auth/revoke")
 
         clearSession()
     }

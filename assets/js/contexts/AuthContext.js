@@ -2,6 +2,7 @@ import React, {createContext, useContext, useEffect, useState} from "react"
 import axios, {CanceledError} from "axios"
 
 const ACCESS_TOKEN_KEY = "access_token"
+const ACCESS_TOKEN_EXPIRY_DATE_KEY = "access_token_expiry_date"
 const USER_KEY = "user"
 
 const AuthContext = createContext(null)
@@ -9,6 +10,7 @@ const AuthContext = createContext(null)
 export function AuthContextProvider(props) {
     const [currentUser, setCurrentUser] = useState(getStoredUser())
     const [accessToken, setAccessToken] = useState(localStorage.getItem(ACCESS_TOKEN_KEY))
+    const [accessTokenExpiryDate, setAccessTokenExpiryDate] = useState(getStoredAccessTokenExpiryDate())
 
     let apiConfig = {
         baseURL: "/api",
@@ -52,6 +54,28 @@ export function AuthContextProvider(props) {
     }, [accessToken])
 
     useEffect(() => {
+        if (accessTokenExpiryDate === null) {
+            return
+        }
+
+        let delay = accessTokenExpiryDate.getTime() - (new Date()).getTime()
+        if (delay < 0) {
+            delay = 0
+        }
+
+        // setTimeout does not work with delays over 24 hours
+        if (delay / 1000 / 60 / 60 >= 24) {
+            return
+        }
+
+        const timeoutId = setTimeout(() => {
+            clearSession()
+        }, delay)
+
+        return () => clearTimeout(timeoutId)
+    }, [accessTokenExpiryDate])
+
+    useEffect(() => {
         if (currentUser === null) {
             return
         }
@@ -78,16 +102,26 @@ export function AuthContextProvider(props) {
         return user === null ? null : JSON.parse(user)
     }
 
+    function getStoredAccessTokenExpiryDate() {
+        const expiryDate = localStorage.getItem(ACCESS_TOKEN_EXPIRY_DATE_KEY)
+
+        return expiryDate === null ? null : new Date(parseInt(expiryDate))
+    }
+
     function updateAccessTokenData(data) {
         const {token, expiresAt} = data
+        const expiryDate = new Date(expiresAt)
 
         setAccessToken(token)
+        setAccessTokenExpiryDate(expiryDate)
 
         localStorage.setItem(ACCESS_TOKEN_KEY, token)
+        localStorage.setItem(ACCESS_TOKEN_EXPIRY_DATE_KEY, expiryDate.getTime().toString())
     }
 
     function clearSession() {
         setAccessToken(null)
+        setAccessTokenExpiryDate(null)
         setCurrentUser(null)
 
         localStorage.clear()

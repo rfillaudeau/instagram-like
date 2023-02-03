@@ -1,11 +1,10 @@
 import React, {useContext, useRef, useState} from "react"
-import {Link, Navigate, useNavigate} from "react-router-dom"
-import axios from "axios"
+import {Link, Navigate} from "react-router-dom"
 import AuthContext from "../contexts/AuthContext"
 import useForm from "../hooks/useForm"
 
 function SignUp() {
-    const {currentUser} = useContext(AuthContext)
+    const {currentUser, api} = useContext(AuthContext)
     const {inputs, handleChange} = useForm({
         username: "",
         email: "",
@@ -13,8 +12,8 @@ function SignUp() {
         passwordConfirmation: ""
     })
     const [error, setError] = useState("")
+    const [success, setSuccess] = useState("")
     const submitButtonRef = useRef(null)
-    const navigate = useNavigate()
 
     if (currentUser !== null) {
         return <Navigate to="/" replace/>
@@ -23,6 +22,8 @@ function SignUp() {
     function handleSubmit(event) {
         event.preventDefault()
 
+        setSuccess("")
+
         submitButtonRef.current.disabled = true
 
         if (!handleValidation()) {
@@ -30,12 +31,12 @@ function SignUp() {
             return
         }
 
-        axios.post("/users", {
+        api.post("/users", {
             username: inputs.username,
             email: inputs.email,
             plainPassword: inputs.password
         }).then(() => {
-            navigate("/sign-in")
+            setSuccess("Account successfully created.")
         }).catch(error => {
             if (!error.response) {
                 return
@@ -140,6 +141,13 @@ function SignUp() {
                             error.length > 0 &&
                             <div className="alert alert-danger mb-3" role="alert">
                                 {error}
+                            </div>
+                        }
+
+                        {
+                            success.length > 0 &&
+                            <div className="alert alert-success mb-3" role="alert">
+                                {success}
                             </div>
                         }
 
